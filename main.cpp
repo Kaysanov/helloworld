@@ -1,5 +1,6 @@
 #include "HotkeyManager.h"
-
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
 #include <fmt/core.h>
 #include <iostream>
 
