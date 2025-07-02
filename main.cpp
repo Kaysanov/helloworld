@@ -43,33 +43,34 @@ int main(int argc, char *argv[])
     HotkeyManager input;
 
     // Регистрация клавиатурных комбинаций
-    input.register_hotkey(SDLK_S, SDL_KMOD_CTRL, []()
+    input.registerKeyboardHotkey(SDLK_S, SDL_KMOD_CTRL, []()
                           { std::cout << "Ctrl+S pressed! Saving document...\n"; });
 
-    input.register_hotkey(SDLK_F1, SDL_KMOD_NONE, []()
+    input.registerKeyboardHotkey(SDLK_F1, SDL_KMOD_NONE, []()
                           { std::cout << "Ctrl+F1 pressed! F1 help...\n"; });
 
     // Регистрация комбинаций с мышью
-    input.register_mouse_hotkey(SDL_BUTTON_LEFT, SDL_KMOD_CTRL, []()
+    input.registerMouseHotkey(SDL_BUTTON_LEFT, SDL_KMOD_CTRL, []()
                                 { std::cout << "Ctrl+Left Click pressed!\n"; });
 
     // Регистрация обработчиков мыши
-    input.register_motion_callback([](int x, int y)
+    input.registerMouseMoveCallback([](int x, int y)
                                    { fmt::print("Mouse moved to: ({}, {})\n", x, y); });
 
-    input.register_wheel_callback([](float x, float y)
+    input.registerMouseWheelCallback([](float x, float y)
                                   { fmt::print("Mouse wheel: X={:.2f}, Y={:.2f}\n", x, y); });
 
-    input.register_click_callback(SDL_BUTTON_RIGHT, []()
+    input.registerClickCallback(SDL_BUTTON_RIGHT, []()
                                   { std::cout << "Right button clicked!\n"; });
 
     // Главный цикл
     bool running = true;
 
-    input.register_hotkey(SDLK_ESCAPE, SDL_KMOD_NONE, [&running]()
-                          {   
+    input.registerKeyboardHotkey(SDLK_ESCAPE, SDL_KMOD_NONE, [&running]()
+                            {   
                                 std::cout << "ESC pressed! Close...\n";
-                                running = false; });
+                                running = false; 
+                            });
     while (running)
     {
         SDL_Event event;
@@ -79,8 +80,8 @@ int main(int argc, char *argv[])
             {
                 running = false;
             }
-            input.handle_event(&event);
-        }
+            input.handleEvent(&event);
+        }        
 
         input.update();
         SDL_Delay(16);

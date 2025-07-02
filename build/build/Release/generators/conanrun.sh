@@ -1,1 +1,0 @@
-. "/home/sas/src/helloworld/build/build/Release/generators/conanrunenv-release-x86_64.sh"
