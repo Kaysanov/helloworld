@@ -1,0 +1,3 @@
+/home/sas/src/helloworld/build/build/Release/CMakeFiles/HelowWorld.dir
+/home/sas/src/helloworld/build/build/Release/CMakeFiles/edit_cache.dir
+/home/sas/src/helloworld/build/build/Release/CMakeFiles/rebuild_cache.dir

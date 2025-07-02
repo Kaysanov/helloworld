@@ -7,11 +7,12 @@ find_package(SDL3 REQUIRED)
 add_executable(${PROJECT_NAME} 
         main.cpp
         HotkeyManager.h
-        HotkeyManager.cpp)
+        HotkeyManager.cpp
+    )
 
 target_link_libraries(
-    ${PROJECT_NAME} PRIVATE
-    fmt::fmt
-    sdl::sdl    
-)
+        ${PROJECT_NAME} PRIVATE
+        fmt::fmt
+        sdl::sdl    
+    )
 
