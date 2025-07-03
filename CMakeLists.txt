@@ -15,11 +15,9 @@ set(SOURCES
     ${SOURCE_ROOT}/InputState.cpp
     ${INC_DIR}/InputState.h
     ${SOURCE_ROOT}/HotkeyRegistry.cpp
-    ${INC_DIR}/HotkeyRegistry.h
-    ${SOURCE_ROOT}/EventProcessor.cpp
-    ${INC_DIR}/EventProcessor.h
-    ${SOURCE_ROOT}/ModifierUtils.cpp
-    ${INC_DIR}/ModifierUtils.h
+    ${INC_DIR}/HotkeyRegistry.h    
+    ${SOURCE_ROOT}/MouseEventProcessor.cpp
+    ${INC_DIR}/MouseEventProcessor.h    
 )
 
 # Создание исполняемого файла

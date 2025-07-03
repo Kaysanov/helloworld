@@ -1,6 +1,5 @@
 #include "HotkeyRegistry.h"
-#include "InputState.h"
-#include "ModifierUtils.h"
+#include <tuple>
 
 bool HotkeyRegistry::Hotkey::operator<(const Hotkey &other) const
 {
@@ -8,66 +7,70 @@ bool HotkeyRegistry::Hotkey::operator<(const Hotkey &other) const
         return type < other.type;
     if (type == KEYBOARD)
         return std::tie(input.key, modifiers) < std::tie(other.input.key, other.modifiers);
-    return std::tie(input.mouseButton, modifiers) < std::tie(other.input.mouseButton, other.modifiers);
+    return std::tie(input.mouse_button, modifiers) < std::tie(other.input.mouse_button, other.modifiers);
 }
 
-void HotkeyRegistry::registerKeyboardHotkey(SDL_Keycode key, SDL_Keymod modifiers, Callback callback)
+void HotkeyRegistry::register_key_hotkey(SDL_Keycode key, SDL_Keymod modifiers, Callback callback)
 {
-    Hotkey hk;
-    hk.type = Hotkey::KEYBOARD;
-    hk.input.key = key;
-    hk.modifiers = ModifierUtils::normalize(modifiers);
-    hk.callback = callback;
+    Hotkey hk{Hotkey::KEYBOARD, {.key = key}, normalize_modifiers(modifiers), callback};
     hotkeys.insert(hk);
 }
 
-void HotkeyRegistry::registerMouseHotkey(Uint8 mouseButton, SDL_Keymod modifiers, Callback callback)
+void HotkeyRegistry::register_mouse_hotkey(Uint8 button, SDL_Keymod modifiers, Callback callback)
 {
-    Hotkey hk;
-    hk.type = Hotkey::MOUSE;
-    hk.input.mouseButton = mouseButton;
-    hk.modifiers = ModifierUtils::normalize(modifiers);
-    hk.callback = callback;
+    Hotkey hk{Hotkey::MOUSE, {.mouse_button = button}, normalize_modifiers(modifiers), callback};
     hotkeys.insert(hk);
 }
 
-void HotkeyRegistry::registerClickCallback(Uint8 button, Callback callback)
+bool HotkeyRegistry::process_event(const SDL_Event *event, SDL_Keymod current_mods) const
 {
-    clickCallbacks[button] = callback;
-}
+    current_mods = normalize_modifiers(current_mods);
+    bool handled = false;
 
-void HotkeyRegistry::checkHotkeys(const InputState &inputState) const
-{
-    SDL_Keymod currentMods = ModifierUtils::normalize(SDL_GetModState());
-
-    for (const auto &hk : hotkeys)
+    if (event->type == SDL_EVENT_KEY_DOWN && !event->key.repeat)
     {
-        if (!ModifierUtils::checkModifiers(hk.modifiers, currentMods))
+        for (auto it = hotkeys.rbegin(); it != hotkeys.rend(); ++it)
         {
-            continue;
-        }
-
-        bool pressed = false;
-        if (hk.type == Hotkey::KEYBOARD)
-        {
-            pressed = inputState.isKeyPressed(hk.input.key);
-        }
-        else
-        {
-            pressed = inputState.isMouseButtonPressed(hk.input.mouseButton);
-        }
-
-        if (pressed)
-        {
-            hk.callback();
+            const auto &hk = *it;
+            if (hk.type == Hotkey::KEYBOARD &&
+                hk.input.key == event->key.key &&
+                (current_mods & hk.modifiers) == hk.modifiers)
+            {
+                hk.callback();
+                handled = true;
+                break;
+            }
         }
     }
+    else if (event->type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+    {
+        for (auto it = hotkeys.rbegin(); it != hotkeys.rend(); ++it)
+        {
+            const auto &hk = *it;
+            if (hk.type == Hotkey::MOUSE &&
+                hk.input.mouse_button == event->button.button &&
+                (current_mods & hk.modifiers) == hk.modifiers)
+            {
+                hk.callback();
+                handled = true;
+                break;
+            }
+        }
+    }
+
+    return handled;
 }
 
-void HotkeyRegistry::handleClick(Uint8 button) const
+SDL_Keymod HotkeyRegistry::normalize_modifiers(SDL_Keymod mods)
 {
-    if (auto it = clickCallbacks.find(button); it != clickCallbacks.end())
-    {
-        it->second();
-    }
+    SDL_Keymod normalized = SDL_KMOD_NONE;
+    if (mods & (SDL_KMOD_CTRL | SDL_KMOD_LCTRL | SDL_KMOD_RCTRL))
+        normalized |= SDL_KMOD_CTRL;
+    if (mods & (SDL_KMOD_SHIFT | SDL_KMOD_LSHIFT | SDL_KMOD_RSHIFT))
+        normalized |= SDL_KMOD_SHIFT;
+    if (mods & (SDL_KMOD_ALT | SDL_KMOD_LALT | SDL_KMOD_RALT))
+        normalized |= SDL_KMOD_ALT;
+    if (mods & (SDL_KMOD_GUI | SDL_KMOD_LGUI | SDL_KMOD_RGUI))
+        normalized |= SDL_KMOD_GUI;
+    return normalized;
 }

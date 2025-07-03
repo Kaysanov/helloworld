@@ -4,8 +4,6 @@
 #include <SDL3/SDL.h>
 #include <functional>
 #include <set>
-#include <vector>
-#include <unordered_map>
 
 class HotkeyRegistry
 {
@@ -22,7 +20,7 @@ public:
         union
         {
             SDL_Keycode key;
-            Uint8 mouseButton;
+            Uint8 mouse_button;
         } input;
         SDL_Keymod modifiers;
         Callback callback;
@@ -30,16 +28,14 @@ public:
         bool operator<(const Hotkey &other) const;
     };
 
-    void registerKeyboardHotkey(SDL_Keycode key, SDL_Keymod modifiers, Callback callback);
-    void registerMouseHotkey(Uint8 mouseButton, SDL_Keymod modifiers, Callback callback);
-    void registerClickCallback(Uint8 button, Callback callback);
-
-    void checkHotkeys(const class InputState &inputState) const;
-    void handleClick(Uint8 button) const;
+    void register_key_hotkey(SDL_Keycode key, SDL_Keymod modifiers, Callback callback);
+    void register_mouse_hotkey(Uint8 button, SDL_Keymod modifiers, Callback callback);
+    bool process_event(const SDL_Event *event, SDL_Keymod current_mods) const;
 
 private:
+    static SDL_Keymod normalize_modifiers(SDL_Keymod mods);
+
     std::set<Hotkey> hotkeys;
-    std::unordered_map<Uint8, Callback> clickCallbacks;
 };
 
-#endif // HOTKEYREGISTRY_H
+#endif

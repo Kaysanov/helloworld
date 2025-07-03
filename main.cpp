@@ -4,6 +4,34 @@
 #include <fmt/core.h>
 #include <iostream>
 
+class Window
+{
+public:
+    Window(const char *title, int w, int h, Uint32 flags)
+    {
+        window = SDL_CreateWindow(title, w, h, flags);
+        if (!window)
+        {
+            fmt::print("Window creation failed: {}\n", SDL_GetError());
+        }
+    }
+
+    ~Window()
+    {
+        if (window)
+        {
+            SDL_DestroyWindow(window);
+            fmt::print("SDL_Window  Destroy : {}\n", SDL_GetError());
+        }
+    }
+
+    operator SDL_Window *() { return window; }
+    operator bool() const { return window != nullptr; }
+
+private:
+    SDL_Window *window;
+};
+
 int main(int argc, char *argv[])
 {
     // Вывод версии SDL с использованием правильных макросов
@@ -20,19 +48,19 @@ int main(int argc, char *argv[])
             SDL_VERSIONNUM_MINOR(compiled),
             SDL_VERSIONNUM_MICRO(compiled));
 
-    printf("Starting SDL3 Input Manager...\n");
+    fmt::print("Starting SDL3 Input Manager...\n");
 
     // Инициализация SDL
-    if (!SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS))
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0)
     {
         fmt::print("SDL initialization failed: {}\n", SDL_GetError());
         return 1;
     }
 
     // Создание окна
-    SDL_Window *window = SDL_CreateWindow("Input Manager Demo",
-                                          800, 600,
-                                          SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_RESIZABLE);
+
+    Window window("Input Manager Demo", 800, 600, SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_RESIZABLE);
+
     if (!window)
     {
         fmt::print("Window creation failed: {}\n", SDL_GetError());
@@ -40,37 +68,42 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    HotkeyManager input;
+    HotkeyManager mng;
 
     // Регистрация клавиатурных комбинаций
-    input.registerKeyboardHotkey(SDLK_S, SDL_KMOD_CTRL, []()
-                          { std::cout << "Ctrl+S pressed! Saving document...\n"; });
+    mng.register_hotkey(SDLK_S, SDL_KMOD_CTRL, []()
+                               { fmt::print("Ctrl+S pressed! Saving document...\n"); });
 
-    input.registerKeyboardHotkey(SDLK_F1, SDL_KMOD_NONE, []()
-                          { std::cout << "Ctrl+F1 pressed! F1 help...\n"; });
-
+    mng.register_hotkey(SDLK_F1, SDL_KMOD_NONE, []()
+                        { fmt::print("F1 pressed! F1 help...\n"); });
+    
     // Регистрация комбинаций с мышью
-    input.registerMouseHotkey(SDL_BUTTON_LEFT, SDL_KMOD_CTRL, []()
-                                { std::cout << "Ctrl+Left Click pressed!\n"; });
+    mng.register_mouse_hotkey(SDL_BUTTON_LEFT, SDL_KMOD_CTRL, []()
+                              { fmt::print("Ctrl+Left Click pressed!\n"); });
 
+    mng.register_mouse_hotkey(SDL_BUTTON_LEFT, SDL_KMOD_LCTRL | SDL_KMOD_LSHIFT, []()
+                              { fmt::print("Ctrl+Shift+Left Click pressed!\n"); });
+
+    mng.register_click_callback(SDL_BUTTON_RIGHT, []()
+                                { fmt::print("Right button clicked!\n"); });
+
+    
+    
     // Регистрация обработчиков мыши
-    input.registerMouseMoveCallback([](int x, int y)
-                                   { fmt::print("Mouse moved to: ({}, {})\n", x, y); });
+    // mng.registerMouseMoveCallback([](int x, int y)
+    //                               { fmt::print("Mouse moved to: ({}, {})\n", x, y); });
 
-    input.registerMouseWheelCallback([](float x, float y)
-                                  { fmt::print("Mouse wheel: X={:.2f}, Y={:.2f}\n", x, y); });
-
-    input.registerClickCallback(SDL_BUTTON_RIGHT, []()
-                                  { std::cout << "Right button clicked!\n"; });
+    // mng.registerMouseWheelCallback([](float x, float y)
+    //                               { fmt::print("Mouse wheel: X={:.2f}, Y={:.2f}\n", x, y); });
+    
 
     // Главный цикл
     bool running = true;
 
-    input.registerKeyboardHotkey(SDLK_ESCAPE, SDL_KMOD_NONE, [&running]()
-                            {   
-                                std::cout << "ESC pressed! Close...\n";
-                                running = false; 
-                            });
+    mng.register_hotkey(SDLK_ESCAPE, SDL_KMOD_NONE, [&running]()
+                        {                                   
+                                fmt::print("ESC pressed! Close...\n");
+                                running = false; });
     while (running)
     {
         SDL_Event event;
@@ -80,16 +113,18 @@ int main(int argc, char *argv[])
             {
                 running = false;
             }
-            input.handleEvent(&event);
-        }        
 
-        input.update();
+            mng.handle_event(&event);
+        }
+
+        mng.update();
         SDL_Delay(16);
     }
 
     // Освобождение ресурсов
-    SDL_DestroyWindow(window);
-    SDL_Quit();
+
+    SDL_Quit(); // Window автоматически уничтожится в стеке
+
     printf("Application terminated\n");
 
     return 0;
