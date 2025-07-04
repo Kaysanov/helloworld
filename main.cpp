@@ -3,6 +3,7 @@
 #include <SDL3/SDL_main.h>
 #include <fmt/core.h>
 #include <iostream>
+#include "ConfigManager.h"
 
 class Window
 {
@@ -21,7 +22,7 @@ public:
         if (window)
         {
             SDL_DestroyWindow(window);
-            fmt::print("SDL_Window  Destroy : {}\n", SDL_GetError());
+            fmt::print("SDL_Window  Destroy :\n");
         }
     }
 
@@ -40,6 +41,11 @@ int main(int argc, char *argv[])
 
     fmt::print("SDL version: {}.{}.{}\n",
                SDL_VERSIONNUM_MAJOR(compiled),
+               SDL_VERSIONNUM_MINOR(compiled),
+               SDL_VERSIONNUM_MICRO(compiled));
+
+    fmt::print("SDL version: {}.{}.{}\n",
+               SDL_GetKeyName(SDLK_ESCAPE),
                SDL_VERSIONNUM_MINOR(compiled),
                SDL_VERSIONNUM_MICRO(compiled));
 
@@ -69,41 +75,64 @@ int main(int argc, char *argv[])
     }
 
     HotkeyManager mng;
+    bool running = true;
+
+    // Создаем карту действий
+    ConfigManager::ActionMap actions =
+        {
+            {"save", []()
+             { fmt::print("Ctrl+S pressed! Saving document...\n"); }},
+            {"quit", [&running]()
+             {
+                 fmt::print("ESC pressed! Close...\n");
+                 running = false;
+             }},
+            {"special", []()
+             { fmt::print("Ctrl+Shift+Left Click pressed!\n"); }}};
+
+    // Загрузка конфигурации из файла
+    if (!ConfigManager::load_config("config.json", mng, actions))
+    {
+        fmt::print("Using default hotkeys\n");
+
+        // Регистрация горячих клавиш по умолчанию
+      /*  mng.register_hotkey(SDLK_S, SDL_KMOD_CTRL, actions["save"]);
+        mng.register_hotkey(SDLK_ESCAPE, SDL_KMOD_NONE, actions["quit"]);
+        mng.register_mouse_hotkey(SDL_BUTTON_LEFT,
+                                  SDL_KMOD_CTRL | SDL_KMOD_SHIFT,
+                                  actions["special"]);*/
+    }
 
     // Регистрация клавиатурных комбинаций
-    mng.register_hotkey(SDLK_S, SDL_KMOD_CTRL, []()
-                               { fmt::print("Ctrl+S pressed! Saving document...\n"); });
+    // mng.register_hotkey(SDLK_S, SDL_KMOD_CTRL, []()
+    //                    { fmt::print("Ctrl+S pressed! Saving document...\n"); });
 
     mng.register_hotkey(SDLK_F1, SDL_KMOD_NONE, []()
                         { fmt::print("F1 pressed! F1 help...\n"); });
-    
+
     // Регистрация комбинаций с мышью
     mng.register_mouse_hotkey(SDL_BUTTON_LEFT, SDL_KMOD_CTRL, []()
                               { fmt::print("Ctrl+Left Click pressed!\n"); });
 
-    mng.register_mouse_hotkey(SDL_BUTTON_LEFT, SDL_KMOD_LCTRL | SDL_KMOD_LSHIFT, []()
-                              { fmt::print("Ctrl+Shift+Left Click pressed!\n"); });
+    // mng.register_mouse_hotkey(SDL_BUTTON_LEFT, SDL_KMOD_LCTRL | SDL_KMOD_LSHIFT, []()
+    //                           { fmt::print("Ctrl+Shift+Left Click pressed!\n"); });
 
     mng.register_click_callback(SDL_BUTTON_RIGHT, []()
                                 { fmt::print("Right button clicked!\n"); });
 
-    
-    
     // Регистрация обработчиков мыши
     // mng.registerMouseMoveCallback([](int x, int y)
     //                               { fmt::print("Mouse moved to: ({}, {})\n", x, y); });
 
     // mng.registerMouseWheelCallback([](float x, float y)
     //                               { fmt::print("Mouse wheel: X={:.2f}, Y={:.2f}\n", x, y); });
-    
 
     // Главный цикл
-    bool running = true;
 
-    mng.register_hotkey(SDLK_ESCAPE, SDL_KMOD_NONE, [&running]()
-                        {                                   
-                                fmt::print("ESC pressed! Close...\n");
-                                running = false; });
+    // mng.register_hotkey(SDLK_ESCAPE, SDL_KMOD_NONE, [&running]()
+    //                     {
+    //                             fmt::print("ESC pressed! Close...\n");
+    //                             running = false; });
     while (running)
     {
         SDL_Event event;

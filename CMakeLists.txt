@@ -1,8 +1,10 @@
 cmake_minimum_required(VERSION 3.10.0)
+
 project(HelowWorld VERSION 0.1.0 LANGUAGES C CXX)
 
 find_package(fmt REQUIRED)
 find_package(SDL3 REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 set(SOURCE_ROOT src)
 set(INC_DIR include)
@@ -17,7 +19,9 @@ set(SOURCES
     ${SOURCE_ROOT}/HotkeyRegistry.cpp
     ${INC_DIR}/HotkeyRegistry.h    
     ${SOURCE_ROOT}/MouseEventProcessor.cpp
-    ${INC_DIR}/MouseEventProcessor.h    
+    ${INC_DIR}/MouseEventProcessor.h  
+    ${SOURCE_ROOT}/ConfigManager.cpp     
+    ${INC_DIR}/ConfigManager.h
 )
 
 # Создание исполняемого файла
@@ -32,7 +36,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 target_link_libraries(
         ${PROJECT_NAME} PRIVATE
         fmt::fmt
-        sdl::sdl    
+        SDL3::SDL3
+        nlohmann_json::nlohmann_json    
     )
 
 # Опции для отладки
@@ -42,3 +47,7 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 else()
     target_compile_options(${PROJECT_NAME} PRIVATE -O2)
 endif()
+
+#option(BUILD_TESTING "Build tests" OFF)
+#set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG")
+#set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -Wall -Wextra")

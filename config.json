@@ -1,0 +1,21 @@
+{
+    "keyboard_hotkeys": [
+        {
+            "action": "save",
+            "key": "S",
+            "modifiers": ["Ctrl"]
+        },
+        {
+            "action": "quit",
+            "key": "Escape",
+            "modifiers": []
+        }
+    ],
+    "mouse_hotkeys": [
+        {
+            "action": "special",
+            "button": "Left",
+            "modifiers": ["Ctrl", "Shift"]
+        }
+    ]
+}
