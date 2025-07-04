@@ -3,19 +3,24 @@
         {
             "action": "save",
             "key": "S",
-            "modifiers": ["Ctrl"]
+            "modifiers": ["LeftCtrl"]
         },
         {
             "action": "quit",
             "key": "Escape",
             "modifiers": []
+        },
+        {
+            "action": "left_ctrl_action",
+            "key": "A",
+            "modifiers": ["LeftCtrl"]
         }
     ],
     "mouse_hotkeys": [
         {
-            "action": "special",
+            "action": "right_ctrl_action",
             "button": "Left",
-            "modifiers": ["Ctrl", "Shift"]
+            "modifiers": ["RightCtrl"]
         }
     ]
 }

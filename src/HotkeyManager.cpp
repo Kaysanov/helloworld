@@ -1,62 +1,92 @@
 #include "HotkeyManager.h"
+#include <iostream>
+#include <tuple>
 
-void HotkeyManager::register_hotkey(SDL_Keycode key, SDL_Keymod modifiers, Callback callback)
+using namespace std;
+
+bool HotkeyManager::Hotkey::operator<(const Hotkey &other) const
 {
-    hotkey_registry.register_key_hotkey(key, modifiers, callback);
-}
+    if (type != other.type)
+        return static_cast<int>(type) < static_cast<int>(other.type);
 
-void HotkeyManager::register_mouse_hotkey(Uint8 button, SDL_Keymod modifiers, Callback callback)
-{
-    hotkey_registry.register_mouse_hotkey(button, modifiers, callback);
-}
-
-void HotkeyManager::register_motion_callback(PositionCallback callback)
-{
-    mouse_processor.register_motion_callback(callback);
-}
-
-void HotkeyManager::register_wheel_callback(WheelCallback callback)
-{
-    mouse_processor.register_wheel_callback(callback);
-}
-
-void HotkeyManager::register_click_callback(Uint8 button, Callback callback)
-{
-    mouse_processor.register_click_callback(button, callback);
-}
-
-void HotkeyManager::update()
-{
-    InputState::get_instance().update();
-}
-
-void HotkeyManager::handle_event(const SDL_Event *event)
-{
-    InputState::get_instance().handle_event(event);
-    mouse_processor.process_event(event);
-
-    if (event->type == SDL_EVENT_KEY_DOWN || event->type == SDL_EVENT_MOUSE_BUTTON_DOWN)
+    switch (type)
     {
-        hotkey_registry.process_event(event, get_current_modifiers());
+    case HotkeyType::Keyboard:
+        return tie(input.key, modifiers) < tie(other.input.key, other.modifiers);
+    case HotkeyType::Mouse:
+        return tie(input.button, modifiers) < tie(other.input.button, other.modifiers);
+    case HotkeyType::Gamepad:
+        return tie(input.gamepadButton, modifiers) < tie(other.input.gamepadButton, other.modifiers);
+    default:
+        return false;
     }
 }
 
-bool HotkeyManager::is_key_pressed(SDL_Keycode key)
+bool HotkeyManager::matchesKeyboardHotkey(const Hotkey &hk, const InputEvent &event) const
 {
-    return InputState::get_instance().is_key_pressed(key);
+    return event.type == InputEvent::KeyPressed &&
+           hk.input.key == event.data.key.key &&
+           (hk.modifiers & event.data.key.modifiers) == hk.modifiers;
 }
 
-bool HotkeyManager::is_mouse_button_pressed(Uint8 button)
+bool HotkeyManager::matchesMouseHotkey(const Hotkey &hk, const InputEvent &event) const
 {
-    return InputState::get_instance().is_mouse_button_pressed(button);
+    return event.type == InputEvent::MouseButtonPressed &&
+           hk.input.button == event.data.mouseButton.button &&
+           (hk.modifiers & event.data.mouseButton.modifiers) == hk.modifiers;
 }
 
-std::pair<int, int> HotkeyManager::get_mouse_position()
+void HotkeyManager::processEvents(const vector<InputEvent> &events)
 {
-    return InputState::get_instance().get_mouse_position();
-}
+    for (const auto &event : events)
+    {
+        // Обработка горячих клавиш
+        for (const auto &[hotkey, callback] : hotkeyCallbacks)
+        {
+            bool match = false;
 
-SDL_Keymod HotkeyManager::get_current_modifiers()
-{
-    return SDL_GetModState();
+            switch (hotkey.type)
+            {
+            case HotkeyType::Keyboard:
+                match = matchesKeyboardHotkey(hotkey, event);
+                break;
+
+            case HotkeyType::Mouse:
+                match = matchesMouseHotkey(hotkey, event);
+                break;
+
+            // Для других типов можно добавить обработку
+            default:
+                break;
+            }
+
+            if (match)
+            {
+                callback();
+                //break; // Прерываем после первого совпадения
+            }
+        }
+
+        // Обработка кликов мыши
+        if (event.type == InputEvent::MouseButtonPressed)
+        {
+            auto it = clickCallbacks.find(event.data.mouseButton.button);
+            if (it != clickCallbacks.end())
+            {
+                it->second();
+            }
+        }
+
+        // Обработка движения мыши
+        if (event.type == InputEvent::MouseMoved && mouseMoveCallback)
+        {
+            mouseMoveCallback(event.data.mouseMove.x, event.data.mouseMove.y);
+        }
+
+        // Обработка колеса мыши
+        if (event.type == InputEvent::MouseWheel && mouseWheelCallback)
+        {
+            mouseWheelCallback(event.data.mouseWheel.x, event.data.mouseWheel.y);
+        }
+    }
 }

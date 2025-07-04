@@ -1,36 +1,39 @@
 #ifndef CONFIGMANAGER_H
 #define CONFIGMANAGER_H
 
-#include "HotkeyManager.h"
+#include "InputTypes.h"
 #include <nlohmann/json.hpp>
-#include <string>
-#include <functional>
+#include <fstream>
+#include <stdexcept>
+#include <vector>
 #include <unordered_map>
+#include <functional>
 
 using json = nlohmann::json;
 
-class ConfigManager
-{
+class ConfigManager {
 public:
     using ActionMap = std::unordered_map<std::string, std::function<void()>>;
-
+    
     // Загрузка конфигурации
-    static bool load_config(const std::string &filename,
-                            HotkeyManager &hm,
-                            const ActionMap &actions);
-
+    static bool loadConfig(const std::string& filename, 
+                           const ActionMap& actions,
+                           std::vector<std::pair<Key, uint16_t>>& keyboardHotkeys,
+                           std::vector<std::pair<MouseButton, uint16_t>>& mouseHotkeys);
+    
     // Сохранение конфигурации
-    static bool save_config(const std::string &filename,
-                            const HotkeyManager &hm);
+    static bool saveConfig(const std::string& filename,
+                          const std::vector<std::tuple<std::string, Key, uint16_t>>& keyboardConfigs,
+                          const std::vector<std::tuple<std::string, MouseButton, uint16_t>>& mouseConfigs);
 
-private:
-    // Вспомогательные функции преобразования
-    static std::string keycode_to_string(SDL_Keycode key);
-    static SDL_Keycode string_to_keycode(const std::string &str);
-    static std::string button_to_string(Uint8 button);
-    static Uint8 string_to_button(const std::string &str);
-    static std::vector<std::string> modifiers_to_strings(SDL_Keymod mods);
-    static SDL_Keymod strings_to_modifiers(const std::vector<std::string> &mods);
+//private:
+    // Преобразование типов
+    static std::string keyToString(Key key);
+    static Key stringToKey(const std::string& str);
+    static std::string buttonToString(MouseButton button);
+    static MouseButton stringToButton(const std::string& str);
+    static std::vector<std::string> modifiersToStrings(uint16_t modifiers);
+    static uint16_t stringsToModifiers(const std::vector<std::string>& mods);
 };
 
 #endif // CONFIGMANAGER_H
