@@ -25,7 +25,7 @@ public:
     void registerWheelCallback(std::function<void(float, float)> callback);
 
     void registerClickAction(
-        InputState state,
+        const std::string& state,
         MouseButton button,
         uint16_t modifiers,
         std::function<void()> callback,
@@ -36,8 +36,8 @@ private:
     std::function<void(int, int)> moveCallback_;
     std::function<void(float, float)> wheelCallback_;
     
-    std::map<InputState, std::map<MouseHotkey, std::function<void()>>> pressActions_;
-    std::map<InputState, std::map<MouseHotkey, std::function<void()>>> releaseActions_;
+    std::map<std::string, std::map<MouseHotkey, std::function<void()>>> pressActions_;
+    std::map<std::string, std::map<MouseHotkey, std::function<void()>>> releaseActions_;
 
     static MouseHotkey createHotkey(const InputEvent &event);
 };

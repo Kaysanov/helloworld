@@ -188,6 +188,7 @@ struct InputEvent
 };
 
 
+/*
 enum class InputState {
     Default,
     EditMode,
@@ -200,3 +201,4 @@ enum class InputState {
 };
 
 constexpr size_t INPUT_STATE_COUNT = static_cast<size_t>(InputState::_Count);
+*/

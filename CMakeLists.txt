@@ -12,7 +12,7 @@ set(INC_DIR include)
 # Список исходных файлов
 set(SOURCES
     main.cpp
-    ${SOURCE_ROOT}/HotkeyRegistry.cpp    
+#    ${SOURCE_ROOT}/HotkeyRegistry.cpp    
     ${SOURCE_ROOT}/MouseHandler.cpp    
     ${SOURCE_ROOT}/HotkeyHandler.cpp
     ${SOURCE_ROOT}/InputProcessor.cpp

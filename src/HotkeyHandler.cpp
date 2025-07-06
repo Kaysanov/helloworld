@@ -41,7 +41,7 @@ void HotkeyHandler::handleEvent(const InputEvent &event)
 }
 
 void HotkeyHandler::registerAction(
-    InputState state,
+    const std::string& state,
     Key key,
     uint16_t modifiers,
     std::function<void()> callback,

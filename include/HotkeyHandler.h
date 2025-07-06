@@ -31,7 +31,7 @@ public:
     void handleEvent(const InputEvent &event) override;
 
     void registerAction(
-        InputState state,
+        const std::string& state,
         Key key,
         uint16_t modifiers,
         std::function<void()> callback,
@@ -45,7 +45,7 @@ private:
     };
 
     InputStateManager &stateManager_;
-    std::unordered_map<InputState, StateHotkeys> actions_;
+    std::unordered_map<std::string, StateHotkeys> actions_;
 
     static Hotkey createHotkey(const InputEvent &event);
 };

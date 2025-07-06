@@ -75,26 +75,36 @@ int main(int argc, char *argv[])
 
         // Настраиваем горячие клавиши
         hotkeyHandler->registerAction(
-            InputState::Default,
+            "Default",
             Key::S,
             Modifier::Ctrl,
             []()
-            { fmt::print("{}","Ctrl+S pressed! Saving...\n"); }
-        );
+            { fmt::print("{}", "Ctrl+S pressed! Saving...\n"); });
         hotkeyHandler->registerAction(
-            InputState::Default,
+            "Default",
             Key::F1,
             Modifier::None,
-            []()
-            { fmt::print("{}","Ctrl+S pressed! Saving...\n"); }
-        );
+            [&]()
+            {
+                fmt::print("{}", "F1 pressed! Перевод в state \"Edit\"...\n");
+                processor.getStateManager().setState("Edit");
+            });
+        hotkeyHandler->registerAction(
+            "Edit",
+            Key::F1,
+            Modifier::None,
+            [&]()
+            {
+                fmt::print("{}", "F1 pressed! Перевод в state \"Default\"...\n");
+                processor.getStateManager().setState("Default");
+            });
 
         hotkeyHandler->registerAction(
-            InputState::Default,
+            "Default",
             Key::Z,
             Modifier::Ctrl,
             []()
-            { fmt::print("{}","Ctrl+Z Release Undo action\n"); },
+            { fmt::print("{}", "Ctrl+Z Release Undo action\n"); },
             true // On release
         );
 

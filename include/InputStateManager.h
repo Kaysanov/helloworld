@@ -2,6 +2,7 @@
 #include "InputTypes.h"
 #include <unordered_map>
 #include <vector>
+#include <string>  
 
 class InputStateManager
 {
@@ -9,9 +10,9 @@ public:
     void updateFromEvent(const InputEvent &event);
 
     // Управление состояниями
-    void setState(InputState newState);
-    InputState getCurrentState() const;
-    void pushState(InputState newState);
+    void setState(const std::string& newState);
+    const std::string& getCurrentState() const;
+    void pushState(const std::string& newState);
     void popState();
 
     // Проверка состояний ввода
@@ -19,8 +20,8 @@ public:
     bool isMouseButtonPressed(MouseButton button) const;
 
 private:
-    InputState currentState_ = InputState::Default;
-    std::vector<InputState> stateStack_;
+    std::string currentState_ = "Default";
+    std::vector<std::string> stateStack_;
     std::unordered_map<Key, bool> keyStates_;
     std::unordered_map<MouseButton, bool> mouseButtonStates_;
 };

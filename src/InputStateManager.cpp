@@ -21,17 +21,17 @@ void InputStateManager::updateFromEvent(const InputEvent &event)
     }
 }
 
-void InputStateManager::setState(InputState newState)
+void InputStateManager::setState(const std::string& newState)
 {
     currentState_ = newState;
 }
 
-InputState InputStateManager::getCurrentState() const
+const std::string& InputStateManager::getCurrentState() const
 {
     return currentState_;
 }
 
-void InputStateManager::pushState(InputState newState)
+void InputStateManager::pushState(const std::string& newState)
 {
     stateStack_.push_back(currentState_);
     currentState_ = newState;

@@ -66,7 +66,7 @@ void MouseHandler::registerWheelCallback(std::function<void(float, float)> callb
 }
 
 void MouseHandler::registerClickAction(
-    InputState state,
+    const std::string& state,
     MouseButton button,
     uint16_t modifiers,
     std::function<void()> callback,
