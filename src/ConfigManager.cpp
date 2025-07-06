@@ -1,5 +1,6 @@
+// Загрузка конфигурации из файла
 #include "ConfigManager.h"
-#include <iostream>
+#include <fmt/core.h>
 #include <algorithm>
 
 // Преобразование Key в строку
@@ -91,7 +92,7 @@ std::string ConfigManager::keyToString(Key key)
         return "Backspace";
     case Key::Delete:
         return "Delete";
-    case Key::LeftCtrl:
+    case Key::LeftCtrl: 
         return "LeftCtrl";
     case Key::RightCtrl:
         return "RightCtrl";
@@ -226,10 +227,11 @@ uint16_t ConfigManager::stringsToModifiers(const std::vector<std::string> &mods)
 
     for (const auto &m : mods)
     {
+        fmt::print(stderr, "Modifier: {}\n", m);
         if (m == "LeftCtrl")
-            result |= Modifier::LeftCtrl;
+            result |= Modifier::Ctrl;
         else if (m == "RightCtrl")
-            result |= Modifier::RightCtrl;
+            result |= Modifier::Ctrl;
         else if (m == "LeftShift")
             result |= Modifier::LeftShift;
         else if (m == "RightShift")
@@ -243,148 +245,130 @@ uint16_t ConfigManager::stringsToModifiers(const std::vector<std::string> &mods)
         else if (m == "RightSuper")
             result |= Modifier::RightSuper;
     }
-
+    fmt::print(stderr, "Modifier result: {}\n", result);    
     return result;
 }
 
 // Загрузка конфигурации из файла
-bool ConfigManager::loadConfig(const std::string &filename,
-                               const ActionMap &actions,
-                               std::vector<std::pair<Key, uint16_t>> &keyboardHotkeys,
-                               std::vector<std::pair<MouseButton, uint16_t>> &mouseHotkeys)
+void ConfigManager::loadConfig(
+    const std::string &filename,
+    InputProcessor &processor,
+    const ActionMap &actions)
 {
-    try
+    std::ifstream file(filename);
+    if (!file.is_open())
     {
-        std::ifstream file(filename);
-        if (!file.is_open())
-        {
-            std::cerr << "Failed to open config file: " << filename << std::endl;
-            return false;
-        }
-
-        json config;
-        file >> config;
-        file.close();
-
-        // Очищаем выходные векторы
-        keyboardHotkeys.clear();
-        mouseHotkeys.clear();
-
-        // Загрузка клавиатурных комбинаций
-        if (config.contains("keyboard_hotkeys") && config["keyboard_hotkeys"].is_array())
-        {
-            for (const auto &item : config["keyboard_hotkeys"])
-            {
-                try
-                {
-                    std::string action_id = item["action"].get<std::string>();
-                    Key key = stringToKey(item["key"].get<std::string>());
-                    uint16_t mods = stringsToModifiers(item["modifiers"].get<std::vector<std::string>>());
-
-                    // Проверяем, существует ли действие
-                    if (actions.find(action_id) != actions.end())
-                    {
-                        keyboardHotkeys.emplace_back(key, mods);
-                        std::cerr << "Key Action found: " << action_id << std::endl;
-                    }
-                    else
-                    {
-                        std::cerr << "Action not found: " << action_id << std::endl;
-                    }
-                }
-                catch (const std::exception &e)
-                {
-                    std::cerr << "Error parsing keyboard hotkey: " << e.what() << std::endl;
-                }
-            }
-        }
-
-        // Загрузка мышиных комбинаций
-        if (config.contains("mouse_hotkeys") && config["mouse_hotkeys"].is_array())
-        {
-            for (const auto &item : config["mouse_hotkeys"])
-            {
-                try
-                {
-                    std::string action_id = item["action"].get<std::string>();
-                    MouseButton button = stringToButton(item["button"].get<std::string>());
-                    uint16_t mods = stringsToModifiers(item["modifiers"].get<std::vector<std::string>>());
-
-                    if (actions.find(action_id) != actions.end())
-                    {
-                        mouseHotkeys.emplace_back(button, mods);
-                        std::cerr << "Mouse action found: " << action_id << std::endl;
-                    }
-                    else
-                    {
-                        std::cerr << "Action not found: " << action_id << std::endl;
-                    }
-                }
-                catch (const std::exception &e)
-                {
-                    std::cerr << "Error parsing mouse hotkey: " << e.what() << std::endl;
-                }
-            }
-        }
-
-        return true;
+        throw std::runtime_error(fmt::format("Failed to open config file: {}", filename));
     }
-    catch (const std::exception &e)
+
+    json config;
+    file >> config;
+    file.close();
+
+    // Загрузка клавиатурных комбинаций
+    if (config.contains("keyboard_hotkeys") && config["keyboard_hotkeys"].is_array())
     {
-        std::cerr << "Error loading config: " << e.what() << std::endl;
-        return false;
+        for (const auto &item : config["keyboard_hotkeys"])
+        {
+            try
+            {
+                std::string action_id = item["action"].get<std::string>();
+                Key key = stringToKey(item["key"].get<std::string>());
+                uint16_t mods = stringsToModifiers(item["modifiers"].get<std::vector<std::string>>());
+                fmt::print("Registering keyboard hotkey: {}\n", action_id);
+                fmt::print("Key: {}\n", item["key"].get<std::string>());
+                //fmt::print("Modifiers: {}\n", item["modifiers"].get<std::vector<std::string>>());
+                // Регистрация горячей клавиши
+                if (actions.find(action_id) != actions.end())
+                {
+                    processor.registerKeyboardHotkey(key, mods, actions.at(action_id));
+                }
+                else
+                {
+                    fmt::print(stderr, "Action not registered: {}\n", action_id);
+                }
+            }
+            catch (const std::exception &e)
+            {
+                fmt::print(stderr, "Error parsing keyboard hotkey: {}\n", e.what());
+            }
+        }
+    }
+
+    // Загрузка мышиных комбинаций
+    if (config.contains("mouse_hotkeys") && config["mouse_hotkeys"].is_array())
+    {
+        for (const auto &item : config["mouse_hotkeys"])
+        {
+            try
+            {
+                std::string action_id = item["action"].get<std::string>();
+                MouseButton button = stringToButton(item["button"].get<std::string>());
+                uint16_t mods = stringsToModifiers(item["modifiers"].get<std::vector<std::string>>());
+
+                // Регистрация горячей клавиши мыши
+                if (actions.find(action_id) != actions.end())
+                {
+                    processor.registerMouseHotkey(button, mods, actions.at(action_id));
+                }
+                else
+                {
+                    fmt::print(stderr, "Action not registered: {}\n", action_id);
+                }
+            }
+            catch (const std::exception &e)
+            {
+                fmt::print(stderr, "Error parsing mouse hotkey: {}\n", e.what());
+            }
+        }
     }
 }
 
 // Сохранение конфигурации в файл
-bool ConfigManager::saveConfig(const std::string &filename,
-                               const std::vector<std::tuple<std::string, Key, uint16_t>> &keyboardConfigs,
-                               const std::vector<std::tuple<std::string, MouseButton, uint16_t>> &mouseConfigs)
+void ConfigManager::saveConfig(
+    const std::string &filename,
+    InputProcessor &processor,
+    const std::vector<std::pair<std::string, Key>> &keyboardActions,
+    const std::vector<std::pair<std::string, MouseButton>> &mouseActions)
 {
-    try
+    json config;
+
+    // Сохранение клавиатурных комбинаций
+    json keyboardArray = json::array();
+    for (const auto &[action_id, key] : keyboardActions)
     {
-        json config;
+        json item;
+        item["action"] = action_id;
+        item["key"] = keyToString(key);
 
-        // Сохранение клавиатурных комбинаций
-        json keyboardArray = json::array();
-        for (const auto &[action_id, key, mods] : keyboardConfigs)
-        {
-            json item;
-            item["action"] = action_id;
-            item["key"] = keyToString(key);
-            item["modifiers"] = modifiersToStrings(mods);
-            keyboardArray.push_back(item);
-        }
-        config["keyboard_hotkeys"] = keyboardArray;
-
-        // Сохранение мышиных комбинаций
-        json mouseArray = json::array();
-        for (const auto &[action_id, button, mods] : mouseConfigs)
-        {
-            json item;
-            item["action"] = action_id;
-            item["button"] = buttonToString(button);
-            item["modifiers"] = modifiersToStrings(mods);
-            mouseArray.push_back(item);
-        }
-        config["mouse_hotkeys"] = mouseArray;
-
-        // Запись в файл
-        std::ofstream file(filename);
-        if (!file.is_open())
-        {
-            std::cerr << "Failed to open file for writing: " << filename << std::endl;
-            return false;
-        }
-
-        file << config.dump(4); // Красивый вывод с отступами
-        file.close();
-
-        return true;
+        // Получаем текущие модификаторы для этого действия
+        // (В реальной реализации нужно хранить модификаторы для каждого действия)
+        item["modifiers"] = modifiersToStrings(Modifier::Ctrl); // Пример
+        keyboardArray.push_back(item);
     }
-    catch (const std::exception &e)
+    config["keyboard_hotkeys"] = keyboardArray;
+
+    // Сохранение мышиных комбинаций
+    json mouseArray = json::array();
+    for (const auto &[action_id, button] : mouseActions)
     {
-        std::cerr << "Error saving config: " << e.what() << std::endl;
-        return false;
+        json item;
+        item["action"] = action_id;
+        item["button"] = buttonToString(button);
+
+        // Получаем текущие модификаторы для этого действия
+        item["modifiers"] = modifiersToStrings(Modifier::Alt); // Пример
+        mouseArray.push_back(item);
     }
+    config["mouse_hotkeys"] = mouseArray;
+
+    // Запись в файл
+    std::ofstream file(filename);
+    if (!file.is_open())
+    {
+        throw std::runtime_error(fmt::format("Failed to open file for writing: {}", filename));
+    }
+
+    file << config.dump(4); // Красивый вывод с отступами
+    file.close();
 }

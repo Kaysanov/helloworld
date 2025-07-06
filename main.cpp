@@ -1,81 +1,142 @@
-#include "SDLInputSystem.h"
-#include "HotkeyManager.h"
+#include "InputProcessor.h"
+#include "SDLEventGenerator.h"
+#include <SDL3/SDL.h>
+#include <SDL3/SDL_main.h>
+#include <fmt/core.h>
+#include <stdexcept> // Для исключений
+#include <math.h>
+
 #include "ConfigManager.h"
-#include <iostream>
-#include <memory>
 
-int main()
+// Класс-обертка для управления ресурсами SDL
+class SDLManager
 {
-    // Инициализация системы ввода
-    std::unique_ptr<InputSystem> inputSystem = std::make_unique<SDLInputSystem>();
-    if (!inputSystem->initialize())
+public:
+    SDLManager(const char *title, int width, int height, Uint32 flags)
     {
-        std::cerr << "Input system initialization failed\n";
+        // Инициализация SDL
+        if (SDL_Init(SDL_INIT_VIDEO) < 0)
+        {
+            throw std::runtime_error(fmt::format("SDL_Init Error: {}", SDL_GetError()));
+        }
+
+        // Создание окна
+        window_ = SDL_CreateWindow(title, width, height, flags);
+        if (!window_)
+        {
+            SDL_Quit();
+            throw std::runtime_error(fmt::format("SDL_CreateWindow Error: {}", SDL_GetError()));
+        }
+
+        fmt::print("SDL initialized successfully\n");
+    }
+
+    ~SDLManager()
+    {
+        if (window_)
+        {
+            SDL_DestroyWindow(window_);
+            fmt::print("Window destroyed\n");
+        }
+        SDL_Quit();
+        fmt::print("SDL shut down\n");
+    }
+
+    // Запрещаем копирование
+    SDLManager(const SDLManager &) = delete;
+    SDLManager &operator=(const SDLManager &) = delete;
+
+    // Доступ к окну
+    SDL_Window *window() const { return window_; }
+
+private:
+    SDL_Window *window_ = nullptr;
+};
+
+int main(int argc, char *argv[])
+{
+    try
+    {
+        SDLManager sdlManager("Input System Demo (SDL3)",
+                              800, 600,
+                              SDL_WINDOW_HIGH_PIXEL_DENSITY | SDL_WINDOW_RESIZABLE);
+
+        // Создание системы ввода
+        InputProcessor processor;
+        SDLEventGenerator eventGenerator;
+
+        // Регистрация обработчиков
+        // processor.registerKeyboardHotkey(Key::S, Modifier::Ctrl,
+        //                                  []
+        //                                  { fmt::print("Ctrl+S: Save triggered\n"); });
+        // // Регистрация обработчиков
+        // processor.registerKeyboardHotkey(Key::S, Modifier::Ctrl | Modifier::Shift,
+        //                                  []
+        //                                  { fmt::print("Ctrl+Shift+S: Save triggered\n"); });
+
+        // processor.registerMouseHotkey(MouseButton::Left, Modifier::Alt,
+        //                               []
+        //                               { fmt::print("Alt+Click action\n"); });
+
+        /*    // Оптимизация: кэширование позиции мыши для редкого вывода
+            int lastX = -1, lastY = -1;
+            processor.registerMouseMoveCallback(
+                [&](int x, int y)
+                {
+                    static int counter = 0;
+                    if (++counter % 10 == 0 || (abs(x - lastX) > 50 || abs(y - lastY) > 50))
+                    {
+                        fmt::print("Mouse position: {}, {}\n", x, y);
+                        lastX = x;
+                        lastY = y;
+                    }
+                });
+
+            processor.registerMouseWheelCallback(
+                [](float dx, float dy)
+                {
+                    // Фильтрация микро-движений
+                    if (fabs(dx) > 0.01f || fabs(dy) > 0.01f)
+                    {
+                        fmt::print("Mouse wheel: {:.2f}, {:.2f}\n", dx, dy);
+                    }
+                });
+        */
+
+        // Обработка события выхода
+        /*processor.registerKeyboardHotkey(Key::Q, Modifier::Ctrl,
+                                         [&]
+                                         {
+                                             SDL_Event evt{};
+                                             evt.type = SDL_EVENT_QUIT;
+                                             SDL_PushEvent(&evt);
+                                         });*/
+
+        // Определение действий
+        ConfigManager::ActionMap actions = {
+            {"save", []
+                    {   fmt::print("Save triggered\n"); }},
+            {"exit", [&]
+                {
+                    SDL_Event evt{};
+                    evt.type = SDL_EVENT_QUIT;
+                    SDL_PushEvent(&evt);
+                }},
+            {"custom_action", []
+                {   fmt::print("Custom action\n"); }}};
+        // Загрузка конфигурации
+        ConfigManager::loadConfig("config.json", processor, actions);
+
+        // Запуск основного цикла
+        eventGenerator.runEventLoop(processor);
+
+        fmt::print("Exiting...\n");
+
+        return 0;
+    }
+    catch (const std::exception &e)
+    {
+        fmt::print(stderr, "Error: {}\n", e.what());
         return 1;
     }
-
-    // Создание окна
-    void *window = inputSystem->createWindow("Input Manager Demo", 800, 600);
-    if (!window)
-    {
-        std::cerr << "Window creation failed\n";
-        inputSystem->shutdown();
-        return 1;
-    }
-
-    HotkeyManager manager;
-    bool running = true;
-
-    // Регистрация обработчиков мыши
-    /*manager.registerMouseMoveCallback([](int x, int y) {
-            std::cout << "Mouse position: " << x << ", " << y << "\n";
-    });*/
-    // Регистрация обработчиков мыши
-    manager.registerMouseWheelCallback([](float x, float y)
-                                       { std::cout << "Mouse Wheel position: " << x << ", " << y << "\n"; });
-
-    manager.registerClickCallback(MouseButton::Right, []
-                                  { std::cout << "Right mouse button clicked\n"; });
-
-    // Регистрация горячих клавиш через шаблонную функцию
-    manager.registerHotkey(Key::S, Modifier::LeftCtrl, []
-                           { std::cout << "LeftCtrl+S pressed\n"; });
-
-    manager.registerHotkey(Key::S, Modifier::LeftShift, []
-                           { std::cout << "LeftShift+S pressed\n"; });
-                    
-    manager.registerHotkey(Key::S, Modifier::LeftCtrl | Modifier::LeftShift, []
-                           { std::cout << "LeftCtrl+LeftShift+S pressed\n"; });
-
-    // Регистрация Ctrl+Q для выхода
-    manager.registerHotkey(Key::Escape, Modifier::None, [&running]
-                           {
-        std::cout << "Escape pressed - quitting" << std::endl;
-        running = false; });
-
-    manager.registerHotkey(MouseButton::Left, Modifier::LeftCtrl | Modifier::LeftAlt, []
-                           { std::cout << "Right Ctrl+Left Alt+Left Mouse pressed\n"; });
-
-    std::cout << "Application started. Press:\n";
-    std::cout << "  Left Ctrl+S - Test left Ctrl\n";
-    std::cout << "  Right Ctrl+S - Test right Ctrl\n";
-    std::cout << "  Escape - Quit\n";
-    std::cout << "  Right mouse button - Test click\n";
-    std::cout << "  Right Ctrl+Left Alt+Left Mouse - Special combo\n\n";
-
-    // Главный цикл
-    while (running)
-    {
-        inputSystem->pollEvents();
-        manager.processEvents(inputSystem->getEvents());
-        manager.update();
-
-        // Здесь может быть рендеринг
-        SDL_Delay(16);
-    }
-
-    inputSystem->destroyWindow(window);
-    inputSystem->shutdown();
-    std::cout << "Application terminated\n";
-    return 0;
 }

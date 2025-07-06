@@ -1,41 +1,73 @@
-#ifndef HOTKEYREGISTRY_H
-#define HOTKEYREGISTRY_H
-
-#include <SDL3/SDL.h>
+#pragma once
+#include "InputTypes.h"
 #include <functional>
-#include <set>
+#include <unordered_map>
+#include <cstddef> // Для size_t
 
-class HotkeyRegistry
-{
+class HotkeyRegistry {
 public:
-    using Callback = std::function<void()>;
-
-    struct Hotkey
-    {
-        enum Type
-        {
-            KEYBOARD,
-            MOUSE
-        } type;
-        union
-        {
-            SDL_Keycode key;
-            Uint8 mouse_button;
+    struct Hotkey {
+        HotkeyType type = HotkeyType::Keyboard;
+        uint16_t modifiers = 0;
+        
+        union {
+            Key key = Key::Unknown;
+            MouseButton button;
+            int gamepadButton;
         } input;
-        SDL_Keymod modifiers;
-        Callback callback;
 
-        bool operator<(const Hotkey &other) const;
+        bool operator==(const Hotkey& other) const {
+            if (type != other.type || modifiers != other.modifiers) 
+                return false;
+            
+            switch (type) {
+                case HotkeyType::Keyboard:
+                    return input.key == other.input.key;
+                case HotkeyType::Mouse:
+                    return input.button == other.input.button;
+                case HotkeyType::Gamepad:
+                    return input.gamepadButton == other.input.gamepadButton;
+                default:
+                    return true;
+            }
+        }
+
+        struct Hash {
+            size_t operator()(const Hotkey& hk) const {
+                size_t seed = 0;
+                
+                // Хеш-комбинатор
+                auto hash_combine = [](size_t& seed, auto value) {
+                    seed ^= std::hash<decltype(value)>{}(value) + 0x9e3779b9 + (seed << 6) + (seed >> 2);
+                };
+                
+                // Комбинируем поля
+                hash_combine(seed, static_cast<int>(hk.type));
+                hash_combine(seed, hk.modifiers);
+                
+                switch (hk.type) {
+                    case HotkeyType::Keyboard:
+                        hash_combine(seed, static_cast<int>(hk.input.key));
+                        break;
+                    case HotkeyType::Mouse:
+                        hash_combine(seed, static_cast<int>(hk.input.button));
+                        break;
+                    case HotkeyType::Gamepad:
+                        hash_combine(seed, hk.input.gamepadButton);
+                        break;
+                    default:
+                        hash_combine(seed, 0xDEADBEEF);
+                }
+                return seed;
+            }
+        };
     };
 
-    void register_key_hotkey(SDL_Keycode key, SDL_Keymod modifiers, Callback callback);
-    void register_mouse_hotkey(Uint8 button, SDL_Keymod modifiers, Callback callback);
-    bool process_event(const SDL_Event *event, SDL_Keymod current_mods) const;
+    void registerKeyboardHotkey(Key key, uint16_t modifiers, std::function<void()> callback);
+    void registerMouseHotkey(MouseButton button, uint16_t modifiers, std::function<void()> callback);
+    
+    std::function<void()> findCallback(const Hotkey& hk) const;
 
 private:
-    static SDL_Keymod normalize_modifiers(SDL_Keymod mods);
-
-    std::set<Hotkey> hotkeys;
+    std::unordered_map<Hotkey, std::function<void()>, Hotkey::Hash> callbacks_;
 };
-
-#endif

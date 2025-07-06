@@ -12,14 +12,11 @@ set(INC_DIR include)
 # Список исходных файлов
 set(SOURCES
     main.cpp
-    ${SOURCE_ROOT}/HotkeyManager.cpp
-    ${INC_DIR}/HotkeyManager.h    
-    ${SOURCE_ROOT}/ConfigManager.cpp     
-    ${INC_DIR}/ConfigManager.h    
-    ${INC_DIR}/InputTypes.h
-    ${INC_DIR}/InputSystem.h
-    ${SOURCE_ROOT}/SDLInputSystem.cpp     
-    ${INC_DIR}/SDLInputSystem.h    
+    ${SOURCE_ROOT}/HotkeyRegistry.cpp    
+    ${SOURCE_ROOT}/MouseHandler.cpp    
+    ${SOURCE_ROOT}/InputProcessor.cpp
+    ${SOURCE_ROOT}/SDLEventGenerator.cpp
+    ${SOURCE_ROOT}/ConfigManager.cpp
 )
 
 # Создание исполняемого файла
