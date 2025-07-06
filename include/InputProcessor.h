@@ -1,22 +1,21 @@
 #pragma once
 #include "IInputHandler.h"
-#include "InputTypes.h"
-#include <functional>
+#include "InputStateManager.h"
+#include <vector>
 #include <memory>
 
-class InputProcessor {
+class InputProcessor : public IInputHandler
+{
 public:
     InputProcessor();
     ~InputProcessor();
-    
-    void handleEvent(const InputEvent& event);
-    
-    // Методы для регистрации обработчиков
-    void registerKeyboardHotkey(Key key, uint16_t modifiers, std::function<void()> callback);
-    void registerMouseHotkey(MouseButton button, uint16_t modifiers, std::function<void()> callback);
-    void registerMouseMoveCallback(std::function<void(int, int)> callback);
-    void registerMouseWheelCallback(std::function<void(float, float)> callback);
-    void registerClickCallback(MouseButton button, std::function<void()> callback);
+
+    void handleEvent(const InputEvent &event) override;
+
+    void addHandler(std::shared_ptr<IInputHandler> handler);
+    void removeHandler(std::shared_ptr<IInputHandler> handler);
+
+    InputStateManager &getStateManager();
 
 private:
     struct Impl;

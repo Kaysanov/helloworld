@@ -8,6 +8,9 @@
 
 #include "ConfigManager.h"
 
+#include "HotkeyHandler.h"
+#include "MouseHandler.h"
+
 // Класс-обертка для управления ресурсами SDL
 class SDLManager
 {
@@ -63,74 +66,41 @@ int main(int argc, char *argv[])
 
         // Создание системы ввода
         InputProcessor processor;
+
+        auto hotkeyHandler = std::make_shared<HotkeyHandler>(processor.getStateManager());
+        auto mouseHandler = std::make_shared<MouseHandler>(processor.getStateManager());
+
+        processor.addHandler(hotkeyHandler);
+        processor.addHandler(mouseHandler);
+
+        // Настраиваем горячие клавиши
+        hotkeyHandler->registerAction(
+            InputState::Default,
+            Key::S,
+            Modifier::Ctrl,
+            []()
+            { fmt::print("{}","Ctrl+S pressed! Saving...\n"); }
+        );
+        hotkeyHandler->registerAction(
+            InputState::Default,
+            Key::F1,
+            Modifier::None,
+            []()
+            { fmt::print("{}","Ctrl+S pressed! Saving...\n"); }
+        );
+
+        hotkeyHandler->registerAction(
+            InputState::Default,
+            Key::Z,
+            Modifier::Ctrl,
+            []()
+            { fmt::print("{}","Ctrl+Z Release Undo action\n"); },
+            true // On release
+        );
+
+        // Главный цикл
         SDLEventGenerator eventGenerator;
-
-        // Регистрация обработчиков
-        // processor.registerKeyboardHotkey(Key::S, Modifier::Ctrl,
-        //                                  []
-        //                                  { fmt::print("Ctrl+S: Save triggered\n"); });
-        // // Регистрация обработчиков
-        // processor.registerKeyboardHotkey(Key::S, Modifier::Ctrl | Modifier::Shift,
-        //                                  []
-        //                                  { fmt::print("Ctrl+Shift+S: Save triggered\n"); });
-
-        // processor.registerMouseHotkey(MouseButton::Left, Modifier::Alt,
-        //                               []
-        //                               { fmt::print("Alt+Click action\n"); });
-
-        /*    // Оптимизация: кэширование позиции мыши для редкого вывода
-            int lastX = -1, lastY = -1;
-            processor.registerMouseMoveCallback(
-                [&](int x, int y)
-                {
-                    static int counter = 0;
-                    if (++counter % 10 == 0 || (abs(x - lastX) > 50 || abs(y - lastY) > 50))
-                    {
-                        fmt::print("Mouse position: {}, {}\n", x, y);
-                        lastX = x;
-                        lastY = y;
-                    }
-                });
-
-            processor.registerMouseWheelCallback(
-                [](float dx, float dy)
-                {
-                    // Фильтрация микро-движений
-                    if (fabs(dx) > 0.01f || fabs(dy) > 0.01f)
-                    {
-                        fmt::print("Mouse wheel: {:.2f}, {:.2f}\n", dx, dy);
-                    }
-                });
-        */
-
-        // Обработка события выхода
-        /*processor.registerKeyboardHotkey(Key::Q, Modifier::Ctrl,
-                                         [&]
-                                         {
-                                             SDL_Event evt{};
-                                             evt.type = SDL_EVENT_QUIT;
-                                             SDL_PushEvent(&evt);
-                                         });*/
-
-        // Определение действий
-        ConfigManager::ActionMap actions = {
-            {"save", []
-                    {   fmt::print("Save triggered\n"); }},
-            {"exit", [&]
-                {
-                    SDL_Event evt{};
-                    evt.type = SDL_EVENT_QUIT;
-                    SDL_PushEvent(&evt);
-                }},
-            {"custom_action", []
-                {   fmt::print("Custom action\n"); }}};
-        // Загрузка конфигурации
-        ConfigManager::loadConfig("config.json", processor, actions);
-
-        // Запуск основного цикла
         eventGenerator.runEventLoop(processor);
-
-        fmt::print("Exiting...\n");
 
         return 0;
     }

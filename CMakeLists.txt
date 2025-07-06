@@ -14,9 +14,11 @@ set(SOURCES
     main.cpp
     ${SOURCE_ROOT}/HotkeyRegistry.cpp    
     ${SOURCE_ROOT}/MouseHandler.cpp    
+    ${SOURCE_ROOT}/HotkeyHandler.cpp
     ${SOURCE_ROOT}/InputProcessor.cpp
     ${SOURCE_ROOT}/SDLEventGenerator.cpp
-    ${SOURCE_ROOT}/ConfigManager.cpp
+    #${SOURCE_ROOT}/ConfigManager.cpp
+    ${SOURCE_ROOT}/InputStateManager.cpp
 )
 
 # Создание исполняемого файла

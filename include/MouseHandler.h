@@ -1,19 +1,43 @@
 #pragma once
 #include "IInputHandler.h"
-#include "InputTypes.h"
+#include "InputStateManager.h"
 #include <functional>
 #include <map>
 
-class MouseHandler : public IInputHandler {
+class MouseHandler : public IInputHandler
+{
 public:
+    struct MouseHotkey
+    {
+        MouseButton button;
+        uint16_t modifiers;
+
+        bool operator<(const MouseHotkey &other) const
+        {
+            return std::tie(button, modifiers) < std::tie(other.button, other.modifiers);
+        }
+    };
+
+    explicit MouseHandler(InputStateManager &stateManager);
+    void handleEvent(const InputEvent &event) override;
+
     void registerMoveCallback(std::function<void(int, int)> callback);
     void registerWheelCallback(std::function<void(float, float)> callback);
-    void registerClickCallback(MouseButton button, std::function<void()> callback);
-    
-    void handleEvent(const InputEvent& event) override;
+
+    void registerClickAction(
+        InputState state,
+        MouseButton button,
+        uint16_t modifiers,
+        std::function<void()> callback,
+        bool onRelease = false);
 
 private:
+    InputStateManager &stateManager_;
     std::function<void(int, int)> moveCallback_;
     std::function<void(float, float)> wheelCallback_;
-    std::map<MouseButton, std::function<void()>> clickCallbacks_;
+    
+    std::map<InputState, std::map<MouseHotkey, std::function<void()>>> pressActions_;
+    std::map<InputState, std::map<MouseHotkey, std::function<void()>>> releaseActions_;
+
+    static MouseHotkey createHotkey(const InputEvent &event);
 };

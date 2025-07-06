@@ -4,7 +4,7 @@
 #include <algorithm>
 
 // Преобразование Key в строку
-std::string ConfigManager::keyToString(Key key)
+std::string ConfigManager::keyToString(Key key) 
 {
     switch (key)
     {
@@ -92,7 +92,7 @@ std::string ConfigManager::keyToString(Key key)
         return "Backspace";
     case Key::Delete:
         return "Delete";
-    case Key::LeftCtrl: 
+    case Key::LeftCtrl:
         return "LeftCtrl";
     case Key::RightCtrl:
         return "RightCtrl";
@@ -245,7 +245,7 @@ uint16_t ConfigManager::stringsToModifiers(const std::vector<std::string> &mods)
         else if (m == "RightSuper")
             result |= Modifier::RightSuper;
     }
-    fmt::print(stderr, "Modifier result: {}\n", result);    
+    fmt::print(stderr, "Modifier result: {}\n", result);
     return result;
 }
 
@@ -272,16 +272,32 @@ void ConfigManager::loadConfig(
         {
             try
             {
+                // ... получение параметров ...
                 std::string action_id = item["action"].get<std::string>();
                 Key key = stringToKey(item["key"].get<std::string>());
                 uint16_t mods = stringsToModifiers(item["modifiers"].get<std::vector<std::string>>());
                 fmt::print("Registering keyboard hotkey: {}\n", action_id);
                 fmt::print("Key: {}\n", item["key"].get<std::string>());
-                //fmt::print("Modifiers: {}\n", item["modifiers"].get<std::vector<std::string>>());
+                // fmt::print("Modifiers: {}\n", item["modifiers"].get<std::vector<std::string>>());
+
+                // Определение типа события
+                std::string event_type = "press"; // значение по умолчанию
+                if (item.contains("event"))
+                {
+                    event_type = item["event"].get<std::string>();
+                }
+
                 // Регистрация горячей клавиши
                 if (actions.find(action_id) != actions.end())
                 {
-                    processor.registerKeyboardHotkey(key, mods, actions.at(action_id));
+                    if (event_type == "release")
+                    {
+                        processor.registerKeyRelease(key, mods, actions.at(action_id));
+                    }
+                    else
+                    {
+                        processor.registerKeyboardHotkey(key, mods, actions.at(action_id));
+                    }
                 }
                 else
                 {
@@ -306,10 +322,23 @@ void ConfigManager::loadConfig(
                 MouseButton button = stringToButton(item["button"].get<std::string>());
                 uint16_t mods = stringsToModifiers(item["modifiers"].get<std::vector<std::string>>());
 
+                std::string event_type = "press";
+                if (item.contains("event"))
+                {
+                    event_type = item["event"].get<std::string>();
+                }
+
                 // Регистрация горячей клавиши мыши
                 if (actions.find(action_id) != actions.end())
                 {
-                    processor.registerMouseHotkey(button, mods, actions.at(action_id));
+                    if (event_type == "release")
+                    {
+                        processor.registerMouseButtonRelease(button, mods, actions.at(action_id));
+                    }
+                    else
+                    {
+                        processor.registerMouseHotkey(button, mods, actions.at(action_id));
+                    }
                 }
                 else
                 {

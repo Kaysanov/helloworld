@@ -3,19 +3,22 @@
         {
             "action": "save",
             "key": "S",
-            "modifiers": ["Ctrl"]
+            "modifiers": ["Ctrl"],
+            "event": "release"
         },
         {
             "action": "exit",
             "key": "Q",
-            "modifiers": ["Ctrl"]
+            "modifiers": ["Ctrl"],
+            "event": "press"
         }
     ],
     "mouse_hotkeys": [
         {
             "action": "custom_action",
             "button": "Right",
-            "modifiers": ["Alt"]
+            "modifiers": ["Alt"],
+            "event": "release"
         }
     ]
 }
