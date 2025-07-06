@@ -79,7 +79,9 @@ int main(int argc, char *argv[])
             Key::S,
             Modifier::Ctrl,
             []()
-            { fmt::print("{}", "Ctrl+S pressed! Saving...\n"); });
+            {
+                fmt::print("{}", "Ctrl+S pressed! Saving...\n");
+            });
         hotkeyHandler->registerAction(
             "Default",
             Key::F1,
@@ -104,9 +106,39 @@ int main(int argc, char *argv[])
             Key::Z,
             Modifier::Ctrl,
             []()
-            { fmt::print("{}", "Ctrl+Z Release Undo action\n"); },
+            {
+                fmt::print("{}", "Ctrl+Z Release Undo action\n");
+            },
             true // On release
         );
+
+        mouseHandler->registerClickAction(
+            "Default",         // Состояние
+            MouseButton::Left, // Кнопка мыши
+            Modifier::None,    // Модификаторы (Ctrl, Shift и т.д.)
+            []()               // Обработчик
+            {
+                fmt::print("{}", "Left mouse button clicked!\n");
+            },
+            false // onRelease: false = нажатие, true = отпускание
+        );
+
+        mouseHandler->registerClickAction(
+            "Edit",
+            MouseButton::Right,
+            Modifier::Ctrl,
+            []()
+            {                
+                fmt::print("{}", "Ctrl+Right click in Edit mode\n");
+            },
+            false);
+        
+        mouseHandler->registerMoveCallback(
+            "Default",            
+            [](int x, int y)
+            {
+                fmt::print("mouse move {} {}\n", x, y);
+            });
 
         // Главный цикл
         SDLEventGenerator eventGenerator;

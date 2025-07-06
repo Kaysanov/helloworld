@@ -21,8 +21,8 @@ public:
     explicit MouseHandler(InputStateManager &stateManager);
     void handleEvent(const InputEvent &event) override;
 
-    void registerMoveCallback(std::function<void(int, int)> callback);
-    void registerWheelCallback(std::function<void(float, float)> callback);
+    void registerMoveCallback(const std::string& state, std::function<void(int, int)> callback);
+    void registerWheelCallback(const std::string& state, std::function<void(float, float)> callback);
 
     void registerClickAction(
         const std::string& state,
@@ -33,8 +33,9 @@ public:
 
 private:
     InputStateManager &stateManager_;
-    std::function<void(int, int)> moveCallback_;
-    std::function<void(float, float)> wheelCallback_;
+    
+    std::map<std::string, std::function<void(int, int)>> moveCallbacks_;
+    std::map<std::string, std::function<void(float, float)>> wheelCallbacks_;
     
     std::map<std::string, std::map<MouseHotkey, std::function<void()>>> pressActions_;
     std::map<std::string, std::map<MouseHotkey, std::function<void()>>> releaseActions_;

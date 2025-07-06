@@ -5,26 +5,29 @@ MouseHandler::MouseHandler(InputStateManager &stateManager)
 
 void MouseHandler::handleEvent(const InputEvent &event)
 {
+    auto state = stateManager_.getCurrentState();
     switch (event.type)
     {
     case InputEventType::MouseMoved:
-        if (moveCallback_)
+        if (auto stateIt = moveCallbacks_.find(state); stateIt != moveCallbacks_.end())
         {
-            moveCallback_(event.data.mouseMove.x, event.data.mouseMove.y);
+            stateIt->second(event.data.mouseMove.x, event.data.mouseMove.y);
         }
+        
         break;
 
     case InputEventType::MouseWheel:
-        if (wheelCallback_)
+        
+        if (auto stateIt = wheelCallbacks_.find(state); stateIt != wheelCallbacks_.end())
         {
-            wheelCallback_(event.data.mouseWheel.x, event.data.mouseWheel.y);
+            stateIt->second(event.data.mouseWheel.x, event.data.mouseWheel.y);
         }
         break;
 
     case InputEventType::MouseButtonPressed:
     case InputEventType::MouseButtonReleased:
     {
-        auto state = stateManager_.getCurrentState();
+
         MouseHotkey hk = createHotkey(event);
 
         if (event.type == InputEventType::MouseButtonPressed)
@@ -55,18 +58,18 @@ void MouseHandler::handleEvent(const InputEvent &event)
     }
 }
 
-void MouseHandler::registerMoveCallback(std::function<void(int, int)> callback)
+void MouseHandler::registerMoveCallback(const std::string &state, std::function<void(int, int)> callback)
 {
-    moveCallback_ = callback;
+    moveCallbacks_[state] = callback;
 }
 
-void MouseHandler::registerWheelCallback(std::function<void(float, float)> callback)
+void MouseHandler::registerWheelCallback(const std::string &state, std::function<void(float, float)> callback)
 {
-    wheelCallback_ = callback;
+    wheelCallbacks_[state] = callback;
 }
 
 void MouseHandler::registerClickAction(
-    const std::string& state,
+    const std::string &state,
     MouseButton button,
     uint16_t modifiers,
     std::function<void()> callback,
