@@ -1,20 +1,17 @@
 #include "InputProcessor.h"
-#include "InputStateManager.h"
+
 #include <algorithm>
-#include "HotkeyHandler.h"
-#include "MouseHandler.h"
+
 #include <fmt/core.h>
 
-struct InputProcessor::Impl
-{
-    InputStateManager stateManager;
-    std::vector<IInputHandler *> handlers;
-};
 
-InputProcessor::InputProcessor() : impl_(std::make_unique<Impl>())
+
+InputProcessor::InputProcessor() : 
+    hotkeyHandler(new HotkeyHandler(getStateManager())),
+    mouseHandler (new MouseHandler(getStateManager()))
 {
-    HotkeyHandler *hotkeyHandler = new HotkeyHandler(getStateManager());
-    MouseHandler *mouseHandler = new MouseHandler(getStateManager());
+    //HotkeyHandler *hotkeyHandler = new HotkeyHandler(getStateManager());
+    //MouseHandler *mouseHandler = new MouseHandler(getStateManager());
 
     addHandler(hotkeyHandler);
     addHandler(mouseHandler);
@@ -22,7 +19,7 @@ InputProcessor::InputProcessor() : impl_(std::make_unique<Impl>())
     // Настраиваем горячие клавиши
     hotkeyHandler->registerAction(
         "Default",
-        Key::S,
+        "S",
         Modifier::Ctrl,
         []()
         {
@@ -30,7 +27,7 @@ InputProcessor::InputProcessor() : impl_(std::make_unique<Impl>())
         });
     hotkeyHandler->registerAction(
         "Default",
-        Key::F1,
+        "F1",
         Modifier::None,
         [&]()
         {
@@ -39,7 +36,7 @@ InputProcessor::InputProcessor() : impl_(std::make_unique<Impl>())
         });
     hotkeyHandler->registerAction(
         "Edit",
-        Key::F1,
+        "F1",
         Modifier::None,
         [&]()
         {
@@ -49,7 +46,7 @@ InputProcessor::InputProcessor() : impl_(std::make_unique<Impl>())
 
     hotkeyHandler->registerAction(
         "Default",
-        Key::Z,
+        "Z",
         Modifier::Ctrl,
         []()
         {
@@ -58,9 +55,10 @@ InputProcessor::InputProcessor() : impl_(std::make_unique<Impl>())
         true // On release
     );
 
-    mouseHandler->registerClickAction(
+    //mouseHandler->registerClickAction(
+    mouseHandler-> registerAction(
         "Default",         // Состояние
-        MouseButton::Left, // Кнопка мыши
+        "Left", // Кнопка мыши
         Modifier::None,    // Модификаторы (Ctrl, Shift и т.д.)
         []()               // Обработчик
         {
@@ -69,9 +67,10 @@ InputProcessor::InputProcessor() : impl_(std::make_unique<Impl>())
         false // onRelease: false = нажатие, true = отпускание
     );
 
-    mouseHandler->registerClickAction(
+    //mouseHandler->registerClickAction(
+    mouseHandler-> registerAction(
         "Edit",
-        MouseButton::Right,
+        "Right",
         Modifier::Ctrl,
         []()
         {
@@ -89,7 +88,7 @@ InputProcessor::InputProcessor() : impl_(std::make_unique<Impl>())
 
 InputProcessor::~InputProcessor()
 {
-    for (auto &handler : impl_->handlers)
+    for (auto &handler : handlers)
     {
         if (handler)
         {
@@ -100,12 +99,12 @@ InputProcessor::~InputProcessor()
 
 void InputProcessor::handleEvent(const InputEvent &event)
 {
-    impl_->stateManager.updateFromEvent(event);
+    //impl_->stateManager.updateFromEvent(event);
 
     // Создаем копию для безопасной итерации
     // auto handlers = impl_->handlers;
 
-    for (auto &handler : impl_->handlers)
+    for (auto &handler : handlers)
     {
         handler->handleEvent(event);
     }
@@ -113,7 +112,7 @@ void InputProcessor::handleEvent(const InputEvent &event)
 
 void InputProcessor::addHandler(IInputHandler *handler)
 {
-    impl_->handlers.push_back(handler);
+    handlers.push_back(handler);
 }
 
 /*void InputProcessor::removeHandler(IInputHandler *handler)
@@ -124,5 +123,5 @@ void InputProcessor::addHandler(IInputHandler *handler)
 
 InputStateManager &InputProcessor::getStateManager()
 {
-    return impl_->stateManager;
+    return stateManager;
 }

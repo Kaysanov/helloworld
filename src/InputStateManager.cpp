@@ -1,6 +1,6 @@
 #include "InputStateManager.h"
 
-void InputStateManager::updateFromEvent(const InputEvent &event)
+/*void InputStateManager::updateFromEvent(const InputEvent &event)
 {
     switch (event.type)
     {
@@ -19,7 +19,7 @@ void InputStateManager::updateFromEvent(const InputEvent &event)
     default:
         break;
     }
-}
+}*/
 
 void InputStateManager::setState(const std::string& newState)
 {
@@ -30,7 +30,7 @@ const std::string& InputStateManager::getCurrentState() const
 {
     return currentState_;
 }
-
+/*
 void InputStateManager::pushState(const std::string& newState)
 {
     stateStack_.push_back(currentState_);
@@ -56,4 +56,4 @@ bool InputStateManager::isMouseButtonPressed(MouseButton button) const
 {
     auto it = mouseButtonStates_.find(button);
     return it != mouseButtonStates_.end() && it->second;
-}
+}*/

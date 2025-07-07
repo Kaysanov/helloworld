@@ -68,6 +68,27 @@ void MouseHandler::registerWheelCallback(const std::string &state, std::function
     wheelCallbacks_[state] = callback;
 }
 
+void MouseHandler::registerAction(
+    const std::string& state,
+    const std::string& buttonName,
+    uint16_t modifiers,
+    std::function<void()> callback,
+    bool onRelease)
+{
+    MouseButton button = MouseButtonfromString(buttonName);
+    registerClickAction(state, button, modifiers, std::move(callback), onRelease);
+    
+    /*MouseHotkey hk{button, modifiers};
+    if (onRelease)
+    {
+        releaseActions_[state][hk] = callback;
+    }
+    else
+    {
+        pressActions_[state][hk] = callback;
+    }*/
+}
+
 void MouseHandler::registerClickAction(
     const std::string &state,
     MouseButton button,

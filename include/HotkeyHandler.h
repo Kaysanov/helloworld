@@ -4,7 +4,7 @@
 #include <functional>
 #include <unordered_map>
 
-class HotkeyHandler : public IInputHandler
+class HotkeyHandler : public InputActionHandler
 {
 public:
     struct Hotkey
@@ -29,7 +29,14 @@ public:
 
     explicit HotkeyHandler(InputStateManager &stateManager);
     void handleEvent(const InputEvent &event) override;
-
+// Унифицированный метод регистрации
+    void registerAction(
+        const std::string &state,
+        const std::string &keyName, // Имя кнопки вместо enum
+        uint16_t modifiers,
+        std::function<void()> callback,
+        bool onRelease = false) override;
+private:        
     void registerAction(
         const std::string& state,
         Key key,
@@ -45,6 +52,7 @@ private:
     };
 
     InputStateManager &stateManager_;
+    
     std::unordered_map<std::string, StateHotkeys> actions_;
 
     static Hotkey createHotkey(const InputEvent &event);

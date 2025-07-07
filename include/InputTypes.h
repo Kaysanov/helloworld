@@ -1,9 +1,12 @@
 #pragma once
 #include <cstddef> // Для size_t
 #include <cstdint>
-
+#include <string>
+#include <key.h>
+#include <mousebutton.h>
 
 // Общие типы данных для системы ввода
+/*
 enum class Key
 {
     Unknown,
@@ -111,6 +114,22 @@ enum class MouseButton
     Extra1,
     Extra2
 };
+
+static MouseButton FromString(const std::string &str)
+{
+    if (str == "Left")
+        return MouseButton::Left;
+    else if (str == "Right")
+        return MouseButton::Right;
+    else if (str == "Middle")
+        return MouseButton::Middle;
+    else if (str == "Extra1")
+        return MouseButton::Extra1;
+    else if (str == "Extra2")
+        return MouseButton::Extra2;
+    else
+        return MouseButton::None;
+}*/
 
 enum class HotkeyType
 {

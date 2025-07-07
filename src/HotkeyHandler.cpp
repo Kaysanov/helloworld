@@ -42,6 +42,20 @@ void HotkeyHandler::handleEvent(const InputEvent &event)
 
 void HotkeyHandler::registerAction(
     const std::string& state,
+    const std::string& keyName,
+    uint16_t modifiers,
+    std::function<void()> callback,
+    bool onRelease)
+{
+    Key key = KeyfromString(keyName);
+    registerAction(state, key, modifiers, std::move(callback), onRelease);
+    
+    
+}
+
+
+void HotkeyHandler::registerAction(
+    const std::string& state,
     Key key,
     uint16_t modifiers,
     std::function<void()> callback,

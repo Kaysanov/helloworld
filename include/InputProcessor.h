@@ -1,8 +1,12 @@
 #pragma once
-#include "IInputHandler.h"
-#include "InputStateManager.h"
 #include <vector>
 #include <memory>
+
+#include "IInputHandler.h"
+#include "InputStateManager.h"
+#include "HotkeyHandler.h"
+#include "MouseHandler.h"
+
 
 class InputProcessor : public IInputHandler
 {
@@ -18,7 +22,9 @@ private:
     void addHandler(IInputHandler *handler);
     //void removeHandler(IInputHandler *handler);
 
-private:
-    struct Impl;
-    std::unique_ptr<Impl> impl_;
+private:    
+    InputStateManager stateManager;
+    std::vector<IInputHandler *> handlers;
+    HotkeyHandler *hotkeyHandler;
+    MouseHandler *mouseHandler;
 };
