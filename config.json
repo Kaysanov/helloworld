@@ -1,12 +1,14 @@
 {
     "keyboard_hotkeys": [
         {
+            "state": "Default",
             "action": "save",
             "key": "S",
             "modifiers": ["Ctrl"],
             "event": "release"
         },
         {
+            "state": "Default",
             "action": "exit",
             "key": "Q",
             "modifiers": ["Ctrl"],
@@ -15,6 +17,7 @@
     ],
     "mouse_hotkeys": [
         {
+            "state": "Default",
             "action": "custom_action",
             "button": "Right",
             "modifiers": ["Alt"],

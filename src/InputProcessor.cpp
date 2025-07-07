@@ -10,8 +10,7 @@ InputProcessor::InputProcessor() :
     hotkeyHandler(new HotkeyHandler(getStateManager())),
     mouseHandler (new MouseHandler(getStateManager()))
 {
-    //HotkeyHandler *hotkeyHandler = new HotkeyHandler(getStateManager());
-    //MouseHandler *mouseHandler = new MouseHandler(getStateManager());
+    
 
     addHandler(hotkeyHandler);
     addHandler(mouseHandler);

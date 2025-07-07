@@ -17,6 +17,8 @@ public:
     void handleEvent(const InputEvent &event) override;
 
     InputStateManager &getStateManager();
+    HotkeyHandler* getHotkeyHandler() { return hotkeyHandler; };
+    MouseHandler* getMouseHandler(){ return mouseHandler; };
     
 private:
     void addHandler(IInputHandler *handler);
