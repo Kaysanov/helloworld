@@ -8,8 +8,7 @@
 
 #include "ConfigManager.h"
 
-#include "HotkeyHandler.h"
-#include "MouseHandler.h"
+
 
 // Класс-обертка для управления ресурсами SDL
 class SDLManager
@@ -66,79 +65,7 @@ int main(int argc, char *argv[])
 
         // Создание системы ввода
         InputProcessor processor;
-
-        auto hotkeyHandler = std::make_shared<HotkeyHandler>(processor.getStateManager());
-        auto mouseHandler = std::make_shared<MouseHandler>(processor.getStateManager());
-
-        processor.addHandler(hotkeyHandler);
-        processor.addHandler(mouseHandler);
-
-        // Настраиваем горячие клавиши
-        hotkeyHandler->registerAction(
-            "Default",
-            Key::S,
-            Modifier::Ctrl,
-            []()
-            {
-                fmt::print("{}", "Ctrl+S pressed! Saving...\n");
-            });
-        hotkeyHandler->registerAction(
-            "Default",
-            Key::F1,
-            Modifier::None,
-            [&]()
-            {
-                fmt::print("{}", "F1 pressed! Перевод в state \"Edit\"...\n");
-                processor.getStateManager().setState("Edit");
-            });
-        hotkeyHandler->registerAction(
-            "Edit",
-            Key::F1,
-            Modifier::None,
-            [&]()
-            {
-                fmt::print("{}", "F1 pressed! Перевод в state \"Default\"...\n");
-                processor.getStateManager().setState("Default");
-            });
-
-        hotkeyHandler->registerAction(
-            "Default",
-            Key::Z,
-            Modifier::Ctrl,
-            []()
-            {
-                fmt::print("{}", "Ctrl+Z Release Undo action\n");
-            },
-            true // On release
-        );
-
-        mouseHandler->registerClickAction(
-            "Default",         // Состояние
-            MouseButton::Left, // Кнопка мыши
-            Modifier::None,    // Модификаторы (Ctrl, Shift и т.д.)
-            []()               // Обработчик
-            {
-                fmt::print("{}", "Left mouse button clicked!\n");
-            },
-            false // onRelease: false = нажатие, true = отпускание
-        );
-
-        mouseHandler->registerClickAction(
-            "Edit",
-            MouseButton::Right,
-            Modifier::Ctrl,
-            []()
-            {                
-                fmt::print("{}", "Ctrl+Right click in Edit mode\n");
-            },
-            false);
         
-        mouseHandler->registerMoveCallback(
-            "Default",            
-            [](int x, int y)
-            {
-                fmt::print("mouse move {} {}\n", x, y);
-            });
 
         // Главный цикл
         SDLEventGenerator eventGenerator;

@@ -12,10 +12,11 @@ public:
 
     void handleEvent(const InputEvent &event) override;
 
-    void addHandler(std::shared_ptr<IInputHandler> handler);
-    void removeHandler(std::shared_ptr<IInputHandler> handler);
-
     InputStateManager &getStateManager();
+    
+private:
+    void addHandler(IInputHandler *handler);
+    //void removeHandler(IInputHandler *handler);
 
 private:
     struct Impl;
