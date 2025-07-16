@@ -36,7 +36,7 @@ public:
         uint16_t modifiers,
         std::function<void()> callback,
         bool onRelease = false) override;
-private:        
+//private:        
     void registerAction(
         const std::string& state,
         Key key,
@@ -55,5 +55,5 @@ private:
     
     std::unordered_map<std::string, StateHotkeys> actions_;
 
-    static Hotkey createHotkey(const InputEvent &event);
+    Hotkey createHotkey(const InputEvent &event);
 };

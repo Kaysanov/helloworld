@@ -1,6 +1,6 @@
 #include "InputStateManager.h"
 
-/*void InputStateManager::updateFromEvent(const InputEvent &event)
+void InputStateManager::updateFromEvent(const InputEvent &event)
 {
     switch (event.type)
     {
@@ -19,7 +19,7 @@
     default:
         break;
     }
-}*/
+}
 
 void InputStateManager::setState(const std::string& newState)
 {
@@ -45,7 +45,7 @@ void InputStateManager::popState()
         stateStack_.pop_back();
     }
 }
-
+*/
 bool InputStateManager::isKeyPressed(Key key) const
 {
     auto it = keyStates_.find(key);
@@ -56,4 +56,17 @@ bool InputStateManager::isMouseButtonPressed(MouseButton button) const
 {
     auto it = mouseButtonStates_.find(button);
     return it != mouseButtonStates_.end() && it->second;
-}*/
+}
+
+uint16_t InputStateManager::getModifiers() const {
+    uint16_t modifiers = Modifier::None;
+    if (isKeyPressed(Key::LeftCtrl))    modifiers |= Modifier::LeftCtrl;
+    if (isKeyPressed(Key::RightCtrl))   modifiers |= Modifier::RightCtrl;
+    if (isKeyPressed(Key::LeftShift))   modifiers |= Modifier::LeftShift;
+    if (isKeyPressed(Key::RightShift))  modifiers |= Modifier::RightShift;
+    if (isKeyPressed(Key::LeftAlt))     modifiers |= Modifier::LeftAlt;
+    if (isKeyPressed(Key::RightAlt))    modifiers |= Modifier::RightAlt;
+    if (isKeyPressed(Key::LeftSuper))   modifiers |= Modifier::LeftSuper;
+    if (isKeyPressed(Key::RightSuper))  modifiers |= Modifier::RightSuper;
+    return modifiers;
+}

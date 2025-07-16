@@ -1,10 +1,10 @@
-#include "SDLEventGenerator.h"
+#include "SDL3EventGenerator.h"
 #include "InputProcessor.h"
 #include <iostream>
 #include "InputTypes.h"
 #include <fmt/core.h>
 
-InputEvent SDLEventGenerator::convertSDLEvent(const SDL_Event &e) const
+InputEvent SDL3EventGenerator::convertSDLEvent(const SDL_Event &e) const
 {
     InputEvent event = {};
 
@@ -57,7 +57,7 @@ InputEvent SDLEventGenerator::convertSDLEvent(const SDL_Event &e) const
     return event;
 }
 
-Key SDLEventGenerator::convertSDLKey(SDL_Keycode key) const
+Key SDL3EventGenerator::convertSDLKey(SDL_Keycode key) const
 {
     switch (key)
     {
@@ -242,7 +242,7 @@ Key SDLEventGenerator::convertSDLKey(SDL_Keycode key) const
     }
 }
 
-MouseButton SDLEventGenerator::convertSDLMouseButton(Uint32 button) const
+MouseButton SDL3EventGenerator::convertSDLMouseButton(Uint32 button) const
 {
     switch (button)
     {
@@ -261,13 +261,15 @@ MouseButton SDLEventGenerator::convertSDLMouseButton(Uint32 button) const
     }
 }
 
-uint16_t SDLEventGenerator::convertSDLModifiers(Uint32 mod) const
+uint16_t SDL3EventGenerator::convertSDLModifiers(Uint32 mod) const
 {
     uint16_t modifiers = 0;
     if (mod & SDL_KMOD_CTRL)
         modifiers |= Modifier::Ctrl;
     if (mod & SDL_KMOD_LCTRL)
-        modifiers |= Modifier::Ctrl;
+        modifiers |= Modifier::LeftCtrl;
+    if (mod & SDL_KMOD_RCTRL)
+        modifiers |= Modifier::RightCtrl;
     if (mod & SDL_KMOD_SHIFT)
         modifiers |= Modifier::Shift;
     if (mod & SDL_KMOD_ALT)
@@ -277,7 +279,7 @@ uint16_t SDLEventGenerator::convertSDLModifiers(Uint32 mod) const
     return modifiers;
 }
 
-void SDLEventGenerator::runEventLoop(InputProcessor &processor)
+void SDL3EventGenerator::runEventLoop(InputProcessor &processor)
 {
     SDL_Event e;
     bool quit = false;

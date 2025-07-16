@@ -25,20 +25,18 @@ public:
     void registerWheelCallback(const std::string &state, std::function<void(float, float)> callback);
 
     // Унифицированный метод регистрации
-    void registerAction(
-        const std::string &state,
-        const std::string &buttonName, // Имя кнопки вместо enum
-        uint16_t modifiers,
-        std::function<void()> callback,
-        bool onRelease = false) override;
+    void registerAction(const std::string &state,
+                        const std::string &buttonName, // Имя кнопки вместо enum
+                        uint16_t modifiers,
+                        std::function<void()> callback,
+                        bool onRelease = false) override;
 
-private:
-    void registerClickAction(
-        const std::string &state,
-        MouseButton button,
-        uint16_t modifiers,
-        std::function<void()> callback,
-        bool onRelease = false);
+    // private:
+    void registerAction(const std::string &state,
+                        MouseButton button,
+                        uint16_t modifiers,
+                        std::function<void()> callback,
+                        bool onRelease = false);
 
     InputStateManager &stateManager_;
 

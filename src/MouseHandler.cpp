@@ -13,11 +13,11 @@ void MouseHandler::handleEvent(const InputEvent &event)
         {
             stateIt->second(event.data.mouseMove.x, event.data.mouseMove.y);
         }
-        
+
         break;
 
     case InputEventType::MouseWheel:
-        
+
         if (auto stateIt = wheelCallbacks_.find(state); stateIt != wheelCallbacks_.end())
         {
             stateIt->second(event.data.mouseWheel.x, event.data.mouseWheel.y);
@@ -68,16 +68,15 @@ void MouseHandler::registerWheelCallback(const std::string &state, std::function
     wheelCallbacks_[state] = callback;
 }
 
-void MouseHandler::registerAction(
-    const std::string& state,
-    const std::string& buttonName,
-    uint16_t modifiers,
-    std::function<void()> callback,
-    bool onRelease)
+void MouseHandler::registerAction(const std::string &state,
+                                  const std::string &buttonName,
+                                  uint16_t modifiers,
+                                  std::function<void()> callback,
+                                  bool onRelease)
 {
-    MouseButton button = MouseButtonfromString(buttonName);
-    registerClickAction(state, button, modifiers, std::move(callback), onRelease);
-    
+    //MouseButton button = MouseButtonfromString(buttonName);
+    registerAction(state, MouseButtonfromString(buttonName), modifiers, std::move(callback), onRelease);
+
     /*MouseHotkey hk{button, modifiers};
     if (onRelease)
     {
@@ -89,12 +88,11 @@ void MouseHandler::registerAction(
     }*/
 }
 
-void MouseHandler::registerClickAction(
-    const std::string &state,
-    MouseButton button,
-    uint16_t modifiers,
-    std::function<void()> callback,
-    bool onRelease)
+void MouseHandler::registerAction(const std::string &state,
+                                  MouseButton button,
+                                  uint16_t modifiers,
+                                  std::function<void()> callback,
+                                  bool onRelease)
 {
     MouseHotkey hk{button, modifiers};
     if (onRelease)

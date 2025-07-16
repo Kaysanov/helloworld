@@ -1,6 +1,6 @@
-[requires]
+[requires]            
     sdl/3.2.14
-    nlohmann_json/3.12.0
+    fmt/11.2.0
 [generators]
     CMakeDeps
     CMakeToolchain    
@@ -8,3 +8,7 @@
     cmake_layout
 [options]
     build_type=Debug
+    os=Linux
+    expat/*:shared=True    
+
+    

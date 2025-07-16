@@ -61,9 +61,9 @@ uint16_t ConfigManager::stringsToModifiers(const std::vector<std::string> &mods)
     {
         fmt::print(stderr, "Modifier: {}\n", m);
         if (m == "LeftCtrl")
-            result |= Modifier::Ctrl;
+            result |= Modifier::LeftCtrl;
         else if (m == "RightCtrl")
-            result |= Modifier::Ctrl;
+            result |= Modifier::RightCtrl;
         else if (m == "LeftShift")
             result |= Modifier::LeftShift;
         else if (m == "RightShift")
@@ -125,7 +125,7 @@ void ConfigManager::loadConfig(
                 // Регистрация горячей клавиши
                 if (actions.find(action_id) != actions.end())
                 {
-                    processor.getHotkeyHandler()->registerAction(state, key, mods,
+                    processor.getHotkeyHandler().registerAction(state, key, mods,
                                                                      actions.at(action_id), event_type == "release");                    
                 }
                 else
@@ -161,7 +161,7 @@ void ConfigManager::loadConfig(
                 // Регистрация горячей клавиши мыши
                 if (actions.find(action_id) != actions.end())
                 {
-                   processor.getHotkeyHandler()->registerAction(state, button, mods,
+                   processor.getHotkeyHandler().registerAction(state, button, mods,
                                                                      actions.at(action_id), event_type == "release");                    
                 }
                 else
