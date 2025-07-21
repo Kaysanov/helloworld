@@ -1,227 +1,153 @@
-// Загрузка конфигурации из файла
 #include "ConfigManager.h"
+#include "InputProcessor.h"
+#include "key.h"
+#include "mousebutton.h"
+#include <nlohmann/json.hpp>
+#include <fstream>
 #include <fmt/core.h>
-#include <algorithm>
 
-// Преобразование Key в строку
-std::string ConfigManager::keyToString(Key key) 
-{
-    return KeytoString(key);
-}
+using json = nlohmann::json;
 
-// Преобразование строки в Key
-Key ConfigManager::stringToKey(const std::string &str)
-{
-   return KeyfromString(str);
-}
+// --- Вспомогательные функции ---
 
-// Преобразование MouseButton в строку
-std::string ConfigManager::buttonToString(MouseButton button)
-{
-    return MouseButtontoString(button);
-}
-
-// Преобразование строки в MouseButton
-MouseButton ConfigManager::stringToButton(const std::string &str)
-{
-   return MouseButtonfromString(str);
-}
-
-// Преобразование модификаторов в строки
 std::vector<std::string> ConfigManager::modifiersToStrings(uint16_t modifiers)
 {
-    std::vector<std::string> result;
-
-    if (modifiers & Modifier::LeftCtrl)
-        result.push_back("LeftCtrl");
-    if (modifiers & Modifier::RightCtrl)
-        result.push_back("RightCtrl");
-    if (modifiers & Modifier::LeftShift)
-        result.push_back("LeftShift");
-    if (modifiers & Modifier::RightShift)
-        result.push_back("RightShift");
-    if (modifiers & Modifier::LeftAlt)
-        result.push_back("LeftAlt");
-    if (modifiers & Modifier::RightAlt)
-        result.push_back("RightAlt");
-    if (modifiers & Modifier::LeftSuper)
-        result.push_back("LeftSuper");
-    if (modifiers & Modifier::RightSuper)
-        result.push_back("RightSuper");
-
-    return result;
+    std::vector<std::string> mods;
+    if (modifiers & Modifier::Ctrl)
+        mods.push_back("Ctrl");
+    if (modifiers & Modifier::Shift)
+        mods.push_back("Shift");
+    if (modifiers & Modifier::Alt)
+        mods.push_back("Alt");
+    if (modifiers & Modifier::Super)
+        mods.push_back("Super");
+    return mods;
 }
 
-// Преобразование строк в модификаторы
 uint16_t ConfigManager::stringsToModifiers(const std::vector<std::string> &mods)
 {
     uint16_t result = Modifier::None;
-
-    for (const auto &m : mods)
+    for (const auto &mod_str : mods)
     {
-        fmt::print(stderr, "Modifier: {}\n", m);
-        if (m == "LeftCtrl")
-            result |= Modifier::LeftCtrl;
-        else if (m == "RightCtrl")
-            result |= Modifier::RightCtrl;
-        else if (m == "LeftShift")
-            result |= Modifier::LeftShift;
-        else if (m == "RightShift")
-            result |= Modifier::RightShift;
-        else if (m == "LeftAlt")
-            result |= Modifier::LeftAlt;
-        else if (m == "RightAlt")
-            result |= Modifier::RightAlt;
-        else if (m == "LeftSuper")
-            result |= Modifier::LeftSuper;
-        else if (m == "RightSuper")
-            result |= Modifier::RightSuper;
+        if (mod_str == "Ctrl")
+            result |= Modifier::Ctrl;
+        else if (mod_str == "Shift")
+            result |= Modifier::Shift;
+        else if (mod_str == "Alt")
+            result |= Modifier::Alt;
+        else if (mod_str == "Super")
+            result |= Modifier::Super;
     }
-    fmt::print(stderr, "Modifier result: {}\n", result);
     return result;
 }
 
-// Загрузка конфигурации из файла
-void ConfigManager::loadConfig(
-    const std::string &filename,
-    InputProcessor &processor,
-    const ActionMap &actions)
+// --- Публичное API ---
+
+void ConfigManager::saveConfig(const std::string &filename, const InputProcessor &processor)
+{
+    json config_json;
+    json kb_bindings;
+    json mouse_bindings;
+
+    // Для простоты сохраняем привязки только для состояния "Default".
+    const std::string state = "Default";
+
+    auto &hotkeyHandler = processor.getHotkeyHandler();
+    auto &mouseHandler = processor.getMouseHandler();
+
+    for (const auto &actionName : processor.getActionNames())
+    {
+        // Сохраняем привязку клавиатуры, если она есть
+        if (auto binding = hotkeyHandler.findBindingForAction(actionName, state))
+        {
+            json b;
+            b["key"] = KeytoString(binding->key);
+            b["modifiers"] = modifiersToStrings(binding->modifiers);
+            kb_bindings[actionName] = b;
+        }
+
+        // Сохраняем привязку мыши, если она есть (независимо от клавиатуры)
+        if (auto binding = mouseHandler.findBindingForAction(actionName, state))
+        {
+            json b;
+            b["button"] = MouseButtonToString(binding->button);
+            b["modifiers"] = modifiersToStrings(binding->modifiers);
+            mouse_bindings[actionName] = b;
+        }
+    }
+
+    config_json["keyboard_bindings"] = kb_bindings;
+    config_json["mouse_bindings"] = mouse_bindings;
+
+    try
+    {
+        std::ofstream file(filename);
+        file << config_json.dump(4);
+        fmt::print("Configuration saved to {}.\n", filename);
+    }
+    catch (const std::exception &e)
+    {
+        fmt::print(stderr, "Error saving configuration to {}: {}\n", filename, e.what());
+    }
+}
+
+void ConfigManager::loadConfig(const std::string &filename, InputProcessor &processor)
 {
     std::ifstream file(filename);
     if (!file.is_open())
     {
-        throw std::runtime_error(fmt::format("Failed to open config file: {}", filename));
+        fmt::print("Configuration file {} not found. Using default bindings.\n", filename);
+        return;
     }
 
-    json config;
-    file >> config;
-    file.close();
-
-    // Загрузка клавиатурных комбинаций
-    if (config.contains("keyboard_hotkeys") && config["keyboard_hotkeys"].is_array())
+    json config_json;
+    try
     {
-        for (const auto &item : config["keyboard_hotkeys"])
+        file >> config_json;
+    }
+    catch (const json::parse_error &e)
+    {
+        fmt::print(stderr, "Error parsing configuration file {}: {}\n", filename, e.what());
+        return;
+    }
+
+    const std::string state = "Default"; // Загружаем в состояние "Default"
+
+    auto load_bindings = [&](const json &bindings, const std::string &type)
+    {
+        if (!bindings.is_object())
+            return;
+        for (const auto &[actionName, info] : bindings.items())
         {
             try
             {
-                // ... получение параметров ...
-                std::string state = item["state"].get<std::string>();
-                std::string action_id = item["action"].get<std::string>();
-                std::string key = item["key"].get<std::string>();
-
-                uint16_t mods = stringsToModifiers(item["modifiers"].get<std::vector<std::string>>());
-                
-                fmt::print("Registering keyboard hotkey: {}, {}\n", action_id, key);
-                
-                // fmt::print("Modifiers: {}\n", item["modifiers"].get<std::vector<std::string>>());
-
-                // Определение типа события
-                std::string event_type = "press"; // значение по умолчанию
-                if (item.contains("event"))
+                uint16_t modifiers = info.contains("modifiers")
+                                         ? stringsToModifiers(info["modifiers"].get<std::vector<std::string>>())
+                                         : Modifier::None;
+                if (type == "keyboard" && info.contains("key"))
                 {
-                    event_type = item["event"].get<std::string>();
+                    processor.getHotkeyHandler().registerBinding(state, actionName, info["key"].get<std::string>(), modifiers);
                 }
-
-                // Регистрация горячей клавиши
-                if (actions.find(action_id) != actions.end())
+                else if (type == "mouse" && info.contains("button"))
                 {
-                    processor.getHotkeyHandler().registerAction(state, key, mods,
-                                                                     actions.at(action_id), event_type == "release");                    
-                }
-                else
-                {
-                    fmt::print(stderr, "Action not registered: {}\n", action_id);
+                    processor.getMouseHandler().registerBinding(state, actionName, info["button"].get<std::string>(), modifiers);
                 }
             }
             catch (const std::exception &e)
             {
-                fmt::print(stderr, "Error parsing keyboard hotkey: {}\n", e.what());
+                fmt::print(stderr, "Error processing binding for action '{}': {}\n", actionName, e.what());
             }
         }
-    }
+    };
 
-    // Загрузка мышиных комбинаций
-    if (config.contains("mouse_hotkeys") && config["mouse_hotkeys"].is_array())
+    if (config_json.contains("keyboard_bindings"))
     {
-        for (const auto &item : config["mouse_hotkeys"])
-        {
-            try
-            {
-                std::string state = item["state"].get<std::string>();
-                std::string action_id = item["action"].get<std::string>();                
-                std::string button = item["key"].get<std::string>();
-                uint16_t mods = stringsToModifiers(item["modifiers"].get<std::vector<std::string>>());
-
-                std::string event_type = "press";
-                if (item.contains("event"))
-                {
-                    event_type = item["event"].get<std::string>();
-                }
-
-                // Регистрация горячей клавиши мыши
-                if (actions.find(action_id) != actions.end())
-                {
-                   processor.getHotkeyHandler().registerAction(state, button, mods,
-                                                                     actions.at(action_id), event_type == "release");                    
-                }
-                else
-                {
-                    fmt::print(stderr, "Action not registered: {}\n", action_id);
-                }
-            }
-            catch (const std::exception &e)
-            {
-                fmt::print(stderr, "Error parsing mouse hotkey: {}\n", e.what());
-            }
-        }
+        load_bindings(config_json["keyboard_bindings"], "keyboard");
     }
-}
-
-// Сохранение конфигурации в файл
-void ConfigManager::saveConfig(
-    const std::string &filename,
-    InputProcessor &processor,
-    const std::vector<std::pair<std::string, Key>> &keyboardActions,
-    const std::vector<std::pair<std::string, MouseButton>> &mouseActions)
-{
-    json config;
-
-    // Сохранение клавиатурных комбинаций
-    json keyboardArray = json::array();
-    for (const auto &[action_id, key] : keyboardActions)
+    if (config_json.contains("mouse_bindings"))
     {
-        json item;
-        item["action"] = action_id;
-        item["key"] = keyToString(key);
-
-        // Получаем текущие модификаторы для этого действия
-        // (В реальной реализации нужно хранить модификаторы для каждого действия)
-        item["modifiers"] = modifiersToStrings(Modifier::Ctrl); // Пример
-        keyboardArray.push_back(item);
-    }
-    config["keyboard_hotkeys"] = keyboardArray;
-
-    // Сохранение мышиных комбинаций
-    json mouseArray = json::array();
-    for (const auto &[action_id, button] : mouseActions)
-    {
-        json item;
-        item["action"] = action_id;
-        item["button"] = buttonToString(button);
-
-        // Получаем текущие модификаторы для этого действия
-        item["modifiers"] = modifiersToStrings(Modifier::Alt); // Пример
-        mouseArray.push_back(item);
-    }
-    config["mouse_hotkeys"] = mouseArray;
-
-    // Запись в файл
-    std::ofstream file(filename);
-    if (!file.is_open())
-    {
-        throw std::runtime_error(fmt::format("Failed to open file for writing: {}", filename));
+        load_bindings(config_json["mouse_bindings"], "mouse");
     }
 
-    file << config.dump(4); // Красивый вывод с отступами
-    file.close();
+    fmt::print("Configuration loaded from {}.\n", filename);
 }

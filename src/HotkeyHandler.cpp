@@ -1,74 +1,100 @@
 #include "HotkeyHandler.h"
-#include <algorithm>
+#include "InputProcessor.h"
+#include <fmt/core.h>
+#include <utility>
 
-HotkeyHandler::HotkeyHandler(InputStateManager &stateManager)
-    : stateManager_(stateManager) {}
+HotkeyHandler::HotkeyHandler(InputProcessor& processor, InputStateManager &stateManager) 
+    : processor_(processor), stateManager_(stateManager) {}
 
 void HotkeyHandler::handleEvent(const InputEvent &event)
 {
-    if (event.type != InputEventType::KeyPressed &&
-        event.type != InputEventType::KeyReleased)
+    if (event.type != InputEventType::KeyPressed && event.type != InputEventType::KeyReleased)
     {
         return;
     }
 
-    auto state = stateManager_.getCurrentState();
-    auto it = actions_.find(state);
+    const std::string &currentState = stateManager_.getCurrentState();
+    auto it = actions_.find(currentState);
     if (it == actions_.end())
-        return;
-
-    Hotkey hk = createHotkey(event);
-    
-    const auto &stateActions = it->second;
-
-    if (event.type == InputEventType::KeyPressed)
     {
-        if (auto callbackIt = stateActions.pressActions.find(hk);
-            callbackIt != stateActions.pressActions.end())
-        {
-            callbackIt->second();
-        }
+        return; // No actions for this state
     }
-    else if (event.type == InputEventType::KeyReleased)
+
+    Hotkey hotkey = createHotkey(event);
+    auto &stateActions = it->second;
+
+    const auto &actionsMap = (event.type == InputEventType::KeyPressed)
+                                 ? stateActions.pressActions
+                                 : stateActions.releaseActions;
+
+    auto action_it = actionsMap.find(hotkey);
+    if (action_it != actionsMap.end())
     {
-        if (auto callbackIt = stateActions.releaseActions.find(hk);
-            callbackIt != stateActions.releaseActions.end())
-        {
-            callbackIt->second();
-        }
+        processor_.triggerAction(action_it->second); // Trigger action by name
     }
 }
 
-void HotkeyHandler::registerAction(
+void HotkeyHandler::registerBinding(
     const std::string &state,
+    const std::string &actionName,
     const std::string &keyName,
     uint16_t modifiers,
-    std::function<void()> callback,
     bool onRelease)
 {
     Key key = KeyfromString(keyName);
-    registerAction(state, key, modifiers, std::move(callback), onRelease);
-}
-
-void HotkeyHandler::registerAction(
-    const std::string &state,
-    Key key,
-    uint16_t modifiers,
-    std::function<void()> callback,
-    bool onRelease)
-{
-    Hotkey hk{key, modifiers};
-    if (onRelease)
+    if (key != Key::Unknown)
     {
-        actions_[state].releaseActions[hk] = callback;
+        registerBinding(state, actionName, key, modifiers, onRelease);
     }
     else
     {
-        actions_[state].pressActions[hk] = callback;
+        fmt::print(stderr, "Warning: Unknown key '{}' for binding to action '{}'.\n", keyName, actionName);
     }
 }
 
+void HotkeyHandler::registerBinding(
+    const std::string &state, 
+    const std::string &actionName, 
+    Key key, 
+    uint16_t modifiers, 
+    bool onRelease)
+{
+    if (onRelease)
+    {
+        actions_[state].releaseActions[{key, modifiers}] = actionName;
+    }
+    else
+    {
+        actions_[state].pressActions[{key, modifiers}] = actionName;
+    }
+}
+
+std::optional<HotkeyHandler::Hotkey> HotkeyHandler::findBindingForAction(const std::string& actionName, const std::string& state) const
+{
+    auto state_it = actions_.find(state);
+    if (state_it == actions_.end()) {
+        return std::nullopt;
+    }
+
+    // Check press actions
+    for (const auto& [hotkey, name] : state_it->second.pressActions) {
+        if (name == actionName) {
+            return hotkey;
+        }
+    }
+
+    // Check release actions
+    for (const auto& [hotkey, name] : state_it->second.releaseActions) {
+        if (name == actionName) {
+            return hotkey;
+        }
+    }
+
+    return std::nullopt;
+}
+
+
 HotkeyHandler::Hotkey HotkeyHandler::createHotkey(const InputEvent &event)
 {
-    return {event.data.key.key, stateManager_.getModifiers()};
+    return {event.data.key.key, event.data.key.modifiers};
 }

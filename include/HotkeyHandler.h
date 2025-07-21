@@ -1,8 +1,12 @@
 #pragma once
 #include "IInputHandler.h"
 #include "InputStateManager.h"
-#include <functional>
 #include <unordered_map>
+#include <string>
+#include <optional>
+
+// Forward declaration to break circular dependency
+class InputProcessor;
 
 class HotkeyHandler : public InputActionHandler
 {
@@ -17,42 +21,41 @@ public:
             return key == other.key && modifiers == other.modifiers;
         }
     };
-    // Хеш-функция должна быть определена в заголовочном файле
+
     struct HotkeyHash
     {
-        size_t operator()(const Hotkey &hk) const
+        std::size_t operator()(const Hotkey &h) const
         {
-            return static_cast<size_t>(hk.key) 
-                   ^ static_cast<size_t>(hk.modifiers) << 16;
+            // Простая комбинация хэшей
+            return std::hash<int>()(static_cast<int>(h.key)) ^ (std::hash<uint16_t>()(h.modifiers) << 1);
         }
     };
 
-    explicit HotkeyHandler(InputStateManager &stateManager);
+    explicit HotkeyHandler(InputProcessor &processor, InputStateManager &stateManager);
     void handleEvent(const InputEvent &event) override;
-// Унифицированный метод регистрации
-    void registerAction(
+
+    // Binds a key to a named action. The action must be defined in InputProcessor.
+    void registerBinding(
         const std::string &state,
-        const std::string &keyName, // Имя кнопки вместо enum
+        const std::string &actionName,
+        const std::string &keyName,
         uint16_t modifiers,
-        std::function<void()> callback,
         bool onRelease = false) override;
-//private:        
-    void registerAction(
-        const std::string& state,
-        Key key,
-        uint16_t modifiers,
-        std::function<void()> callback,
-        bool onRelease = false);
+
+    // Finds the key binding for a given action in a specific state. Used for saving configs.
+    std::optional<Hotkey> findBindingForAction(const std::string &actionName, const std::string &state) const;
 
 private:
+    void registerBinding(const std::string &state, const std::string &actionName, Key key, uint16_t modifiers, bool onRelease);
+
     struct StateHotkeys
     {
-        std::unordered_map<Hotkey, std::function<void()>, HotkeyHash> pressActions;
-        std::unordered_map<Hotkey, std::function<void()>, HotkeyHash> releaseActions;
+        std::unordered_map<Hotkey, std::string, HotkeyHash> pressActions;
+        std::unordered_map<Hotkey, std::string, HotkeyHash> releaseActions;
     };
 
+    InputProcessor &processor_;
     InputStateManager &stateManager_;
-    
     std::unordered_map<std::string, StateHotkeys> actions_;
 
     Hotkey createHotkey(const InputEvent &event);

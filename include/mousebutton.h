@@ -26,7 +26,7 @@ static std::string toLower(const std::string &str)
 }
 
 // Маппинг строка -> enum (инициализируется один раз)
-static const auto MouseButtonFromString = std::unordered_map<std::string, MouseButton>{
+inline const auto MouseButtonFromStringMap = std::unordered_map<std::string, MouseButton>{
     {"none", MouseButton::None},
     {"left", MouseButton::Left},
     {"right", MouseButton::Right},
@@ -34,7 +34,7 @@ static const auto MouseButtonFromString = std::unordered_map<std::string, MouseB
     {"extra1", MouseButton::Extra1},
     {"extra2", MouseButton::Extra2}};
 
-static const auto StringFromMouseButton = std::unordered_map<MouseButton, std::string>{
+inline const auto StringFromMouseButtonMap = std::unordered_map<MouseButton, std::string>{
     {MouseButton::None, "None"},
     {MouseButton::Left, "Left"},
     {MouseButton::Right, "Right"},
@@ -46,9 +46,9 @@ static const auto StringFromMouseButton = std::unordered_map<MouseButton, std::s
 static MouseButton MouseButtonfromString(const std::string &str)
 {
     std::string lower = toLower(str);
-    auto it = MouseButtonFromString.find(lower);
+    auto it = MouseButtonFromStringMap.find(lower);
 
-    if (it != MouseButtonFromString.end())
+    if (it != MouseButtonFromStringMap.end())
     {
         return MouseButton(it->second);
     }
@@ -56,10 +56,10 @@ static MouseButton MouseButtonfromString(const std::string &str)
 }
 
 // Преобразование в строку
-static std::string MouseButtontoString(MouseButton value) 
+static std::string MouseButtonToString(MouseButton value) 
 {
-    auto it = StringFromMouseButton.find(value);
-    if (it != StringFromMouseButton.end())
+    auto it = StringFromMouseButtonMap.find(value);
+    if (it != StringFromMouseButtonMap.end())
     {
         return it->second;
     }

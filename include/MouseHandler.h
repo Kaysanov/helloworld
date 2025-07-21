@@ -1,50 +1,63 @@
 #pragma once
 #include "IInputHandler.h"
 #include "InputStateManager.h"
-#include <functional>
 #include <map>
+#include <string>
+#include <functional>
+#include <optional>
 
+// Forward declaration to break circular dependency
+class InputProcessor;
 class MouseHandler : public InputActionHandler
 {
 public:
-    struct MouseHotkey
+   struct MouseHotkey
     {
         MouseButton button;
         uint16_t modifiers;
 
+        // operator< необходим для использования в std::map
         bool operator<(const MouseHotkey &other) const
         {
-            return std::tie(button, modifiers) < std::tie(other.button, other.modifiers);
+            if (button != other.button)
+            {
+                return button < other.button;
+            }
+            return modifiers < other.modifiers;
         }
     };
 
-    explicit MouseHandler(InputStateManager &stateManager);
+    explicit MouseHandler(InputProcessor& processor, InputStateManager &stateManager);
     void handleEvent(const InputEvent &event) override;
 
     void registerMoveCallback(const std::string &state, std::function<void(int, int)> callback);
     void registerWheelCallback(const std::string &state, std::function<void(float, float)> callback);
 
-    // Унифицированный метод регистрации
-    void registerAction(const std::string &state,
+    // Binds a mouse button to a named action.
+    void registerBinding(const std::string &state,
+                        const std::string &actionName,
                         const std::string &buttonName, // Имя кнопки вместо enum
                         uint16_t modifiers,
-                        std::function<void()> callback,
                         bool onRelease = false) override;
 
-    // private:
-    void registerAction(const std::string &state,
-                        MouseButton button,
-                        uint16_t modifiers,
-                        std::function<void()> callback,
-                        bool onRelease = false);
+    // Finds the mouse binding for a given action in a specific state.
+    std::optional<MouseHotkey> findBindingForAction(const std::string& actionName, const std::string& state) const;
 
+private:
+    void registerBinding(const std::string &state,
+                         const std::string &actionName,
+                         MouseButton button,
+                         uint16_t modifiers,
+                         bool onRelease = false);
+
+    InputProcessor& processor_;
     InputStateManager &stateManager_;
 
     std::map<std::string, std::function<void(int, int)>> moveCallbacks_;
     std::map<std::string, std::function<void(float, float)>> wheelCallbacks_;
 
-    std::map<std::string, std::map<MouseHotkey, std::function<void()>>> pressActions_;
-    std::map<std::string, std::map<MouseHotkey, std::function<void()>>> releaseActions_;
+    std::map<std::string, std::map<MouseHotkey, std::string>> pressActions_;
+    std::map<std::string, std::map<MouseHotkey, std::string>> releaseActions_;
 
     static MouseHotkey createHotkey(const InputEvent &event);
 };

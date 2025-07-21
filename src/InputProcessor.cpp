@@ -1,69 +1,66 @@
 #include "InputProcessor.h"
-
-#include <algorithm>
-
-#include <fmt/core.h>
+#include <utility>
 
 InputProcessor::InputProcessor()
+    : hotkeyHandler(*this, stateManager), mouseHandler(*this, stateManager)
 {
     addHandler(&hotkeyHandler);
     addHandler(&mouseHandler);
-
-    // Настраиваем горячие клавиши
-
-    hotkeyHandler.registerAction(
-        "Default",
-        "Z",
-        Modifier::Ctrl,
-        []()
-        {
-            fmt::print("{}", "Ctrl+Z Release Undo action\n");
-        },
-        true // On release
-    );
-
-    // mouseHandler->registerClickAction(
-    mouseHandler.registerAction(
-        "Default",      // Состояние
-        "Left",         // Кнопка мыши
-        Modifier::None, // Модификаторы (Ctrl, Shift и т.д.)
-        []()            // Обработчик
-        {
-            fmt::print("{}", "Left mouse button clicked!\n");
-        },
-        false // onRelease: false = нажатие, true = отпускание
-    );
-
-    // mouseHandler->registerClickAction(
-    mouseHandler.registerAction(
-        "Edit",
-        "Right",
-        Modifier::Ctrl,
-        []()
-        {
-            fmt::print("{}", "Ctrl+Right click in Edit mode\n");
-        },
-        false);
-
-    /*mouseHandler.registerMoveCallback(
-        "Default",
-        [](int x, int y)
-        {
-            fmt::print("mouse move {} {}\n", x, y);
-        });*/
 }
 
 void InputProcessor::handleEvent(const InputEvent &event)
 {
     stateManager.updateFromEvent(event);
 
-    // Создаем копию для безопасной итерации
-    // auto handlers = impl_->handlers;
-
-    for (auto &handler : handlers)
+    for (auto handler : handlers)
     {
         handler->handleEvent(event);
     }
+}
+
+
+void InputProcessor::defineAction(const std::string &name, std::function<void()> callback)
+{
+    actionMap_[name] = std::move(callback);
+}
+
+void InputProcessor::defineActions(const ActionMap &actions)
+{
+    for (const auto &pair : actions)
+    {
+        defineAction(pair.first, pair.second);
+    }
+}
+
+void InputProcessor::triggerAction(const std::string &actionName)
+{
+    auto it = actionMap_.find(actionName);
+    if (it != actionMap_.end() && it->second)
+    {
+        it->second(); // Выполняем колбэк
+    }
+    // Можно добавить логирование, если действие не найдено
+}
+
+std::vector<std::string> InputProcessor::getActionNames() const
+{
+    std::vector<std::string> names;
+    names.reserve(actionMap_.size());
+    for (const auto &pair : actionMap_)
+    {
+        names.push_back(pair.first);
+    }
+    return names;
+}
+
+void InputProcessor::registerKeyBinding(const std::string &state, const std::string &actionName, const std::string &keyName, uint16_t modifiers, bool onRelease)
+{
+    hotkeyHandler.registerBinding(state, actionName, keyName, modifiers, onRelease);
+}
+
+void InputProcessor::registerMouseButtonBinding(const std::string &state, const std::string &actionName, const std::string &buttonName, uint16_t modifiers, bool onRelease)
+{
+    mouseHandler.registerBinding(state, actionName, buttonName, modifiers, onRelease);
 }
 
 void InputProcessor::addHandler(IInputHandler *handler)
@@ -71,30 +68,12 @@ void InputProcessor::addHandler(IInputHandler *handler)
     handlers.push_back(handler);
 }
 
-/*void InputProcessor::removeHandler(IInputHandler *handler)
+void InputProcessor::setState(const std::string &newState)
 {
-    auto &handlers = impl_->handlers;
-    handlers.erase(std::remove(handlers.begin(), handlers.end(), handler), handlers.end());
-}*/
-
-InputStateManager &InputProcessor::getStateManager()
-{
-    return stateManager;
+    stateManager.setState(newState);
 }
 
-void InputProcessor::registerAction(const std::string &state,
-                                    Key key,
-                                    uint16_t modifiers,
-                                    std::function<void()> callback,
-                                    bool onRelease)
+const std::string &InputProcessor::getCurrentState() const
 {
-    hotkeyHandler.registerAction(state, key, modifiers, callback, onRelease);
-}
-void InputProcessor::registerAction(const std::string &state,
-                                    MouseButton button,
-                                    uint16_t modifiers,
-                                    std::function<void()> callback,
-                                    bool onRelease)
-{
-    mouseHandler.registerAction(state, button, modifiers, callback, onRelease);
+    return stateManager.getCurrentState();
 }

@@ -1,27 +1,18 @@
 {
-    "keyboard_hotkeys": [
-        {
-            "state": "Default",
-            "action": "save",
-            "key": "S",
-            "modifiers": ["Ctrl"],
-            "event": "release"
+    "keyboard_bindings": {
+        "Jump": {
+            "key": "Space",
+            "modifiers": []
         },
-        {
-            "state": "Default",
-            "action": "exit",
-            "key": "Q",
-            "modifiers": ["Ctrl"],
-            "event": "press"
+        "Quit": {
+            "key": "Escape",
+            "modifiers": []
         }
-    ],
-    "mouse_hotkeys": [
-        {
-            "state": "Default",
-            "action": "custom_action",
-            "button": "Right",
-            "modifiers": ["Alt"],
-            "event": "release"
+    },
+    "mouse_bindings": {
+        "Fire": {
+            "button": "Left",
+            "modifiers": []
         }
-    ]
+    }
 }

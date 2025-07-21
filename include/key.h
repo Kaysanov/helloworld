@@ -105,7 +105,7 @@ enum class Key
 
 // Инициализация маппинга строка -> enum
 
-static const auto mapfrom = std::unordered_map<std::string, Key>({{"unknown", Key::Unknown},
+inline const auto mapfrom = std::unordered_map<std::string, Key>({{"unknown", Key::Unknown},
                                                                   {"a", Key::A},
                                                                   {"b", Key::B},
                                                                   {"c", Key::C},
@@ -208,7 +208,7 @@ static const auto mapfrom = std::unordered_map<std::string, Key>({{"unknown", Ke
 
 
 
-static const auto maptostr = std::unordered_map<Key, std::string>({{Key::Unknown, "Unknown"},                                                                   
+inline const auto maptostr = std::unordered_map<Key, std::string>({{Key::Unknown, "Unknown"},                                                                   
                                                                          {Key::A, "A"},
                                                                          {Key::B, "B"},
                                                                          {Key::C, "C"},
