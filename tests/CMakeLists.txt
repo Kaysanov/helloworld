@@ -7,28 +7,27 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # Ищем Google Test
 find_package(GTest REQUIRED)
 find_package(fmt REQUIRED)
+find_package(nlohmann_json REQUIRED)
 
 include_directories(
     ${GTEST_INCLUDE_DIRS}
     ../include)
 
-message(STATUS "GTEST_INCLUDE_DIRS: ${GTEST_INCLUDE_DIRS}")
-
-
 # Добавляем исходные файлы
 add_executable(Tests
-    ../src/InputStateManager.cpp
-    tests.cpp)
+    test_input_state_manager.cpp
+    test_hotkey_handler.cpp
+    test_mouse_handler.cpp
+    test_input_processor.cpp
+)
 
 # Связываем с библиотеками Google Test и pthread
 target_link_libraries(Tests
-    fmt::fmt
+    InputSystemLib # Наша библиотека с логикой
     GTest::gtest
+    GTest::gmock
     GTest::gtest_main
-    Threads::Threads
 )
-
-#add_test(NAME InputStateManagerTest COMMAND Tests)
 
 include(GoogleTest)
 gtest_discover_tests(Tests)
