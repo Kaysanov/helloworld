@@ -53,7 +53,7 @@ int main(int argc, char *argv[])
         // Эти привязки будут использоваться, если файл конфигурации отсутствует.
         fmt::print("Registering default bindings...\n");
 
-        // Привязки для состояния "Default" (основной геймплей)
+        // Привязки для состояния "Default"
         processor.registerKeyBinding("Default", "Jump", "Space", Modifier::None);
         processor.registerKeyBinding("Default", "Crouch", "C", Modifier::None);
         processor.registerMouseButtonBinding("Default", "Fire", "Left", Modifier::None);
@@ -64,6 +64,13 @@ int main(int argc, char *argv[])
         processor.registerKeyBinding("Default", "Quit", "Escape", Modifier::None);
         processor.registerKeyBinding("Menu", "Quit", "Escape", Modifier::None);
 
+        // Привязка колбэков для непрерывного ввода (движение мыши)
+        processor.registerMouseMoveCallback("Default", [](int x, int y)
+                                            {
+            // Чтобы избежать спама в консоль, будем выводить сообщение нечасто
+            static int count = 0;
+            if (++count % 10 == 0) fmt::print("Callback: Mouse moved to ({}, {})\n", x, y); });
+
         // 5. ЗАГРУЗКА ПОЛЬЗОВАТЕЛЬСКОЙ КОНФИГУРАЦИИ
         // ConfigManager переопределит привязки по умолчанию теми, что найдет в файле.
         ConfigManager::loadConfig(CONFIG_FILE, processor);
@@ -71,7 +78,7 @@ int main(int argc, char *argv[])
         // 6. Запуск основного цикла приложения
         SDL3EventGenerator eventGenerator;
         fmt::print("\n--- Starting Event Loop ---\n");
-        fmt::print("Try pressing Space, C, Left Mouse Button, Tab, or Escape.\n");
+        fmt::print("Try pressing Space, C, Left Mouse Button, Tab, or Escape. Try moving the mouse.\n");
         eventGenerator.runEventLoop(processor); // Блокирующий вызов
         fmt::print("--- Event Loop Finished ---\n\n");
 

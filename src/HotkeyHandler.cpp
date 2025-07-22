@@ -35,9 +35,9 @@ void HotkeyHandler::handleEvent(const InputEvent &event)
 }
 
 void HotkeyHandler::registerBinding(
-    const std::string &state,
-    const std::string &actionName,
-    const std::string &keyName,
+    std::string_view state,
+    std::string_view actionName,
+    std::string_view keyName,
     uint16_t modifiers,
     bool onRelease)
 {
@@ -53,19 +53,19 @@ void HotkeyHandler::registerBinding(
 }
 
 void HotkeyHandler::registerBinding(
-    const std::string &state, 
-    const std::string &actionName, 
+    std::string_view state,
+    std::string_view actionName,
     Key key, 
     uint16_t modifiers, 
     bool onRelease)
 {
     if (onRelease)
     {
-        actions_[state].releaseActions[{key, modifiers}] = actionName;
+        actions_[std::string(state)].releaseActions[{key, modifiers}] = std::string(actionName);
     }
     else
     {
-        actions_[state].pressActions[{key, modifiers}] = actionName;
+        actions_[std::string(state)].pressActions[{key, modifiers}] = std::string(actionName);
     }
 }
 
@@ -91,6 +91,17 @@ std::optional<HotkeyHandler::Hotkey> HotkeyHandler::findBindingForAction(const s
     }
 
     return std::nullopt;
+}
+
+std::vector<std::string> HotkeyHandler::getRegisteredStates() const
+{
+    std::vector<std::string> states;
+    states.reserve(actions_.size());
+    for (const auto& [state, _] : actions_)
+    {
+        states.push_back(state);
+    }
+    return states;
 }
 
 

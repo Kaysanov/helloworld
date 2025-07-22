@@ -2,6 +2,7 @@
 #include "InputProcessor.h"
 #include <fmt/core.h>
 #include <utility>
+#include <set>
 
 MouseHandler::MouseHandler(InputProcessor& processor, InputStateManager &stateManager) 
     : processor_(processor), stateManager_(stateManager) {}
@@ -61,9 +62,9 @@ void MouseHandler::registerWheelCallback(const std::string &state, std::function
     wheelCallbacks_[state] = std::move(callback);
 }
 
-void MouseHandler::registerBinding(const std::string &state,
-                                   const std::string &actionName,
-                                   const std::string &buttonName,
+void MouseHandler::registerBinding(std::string_view state,
+                                   std::string_view actionName,
+                                   std::string_view buttonName,
                                    uint16_t modifiers,
                                    bool onRelease)
 {
@@ -78,19 +79,19 @@ void MouseHandler::registerBinding(const std::string &state,
     }
 }
 
-void MouseHandler::registerBinding(const std::string &state,
-                                   const std::string &actionName,
+void MouseHandler::registerBinding(std::string_view state,
+                                   std::string_view actionName,
                                    MouseButton button,
                                    uint16_t modifiers,
                                    bool onRelease)
 {
     if (onRelease)
     {
-        releaseActions_[state][{button, modifiers}] = actionName;
+        releaseActions_[std::string(state)][{button, modifiers}] = std::string(actionName);
     }
     else
     {
-        pressActions_[state][{button, modifiers}] = actionName;
+        pressActions_[std::string(state)][{button, modifiers}] = std::string(actionName);
     }
 }
 
@@ -117,6 +118,29 @@ std::optional<MouseHandler::MouseHotkey> MouseHandler::findBindingForAction(cons
     }
 
     return std::nullopt;
+}
+
+std::vector<std::string> MouseHandler::getRegisteredStates() const
+{
+    std::set<std::string> unique_states;
+
+    for (const auto& [state, _] : pressActions_) {
+        unique_states.insert(state);
+    }
+    for (const auto& [state, _] : releaseActions_) {
+        unique_states.insert(state);
+    }
+    // Also consider states that only have callbacks
+    for (const auto& [state, _] : moveCallbacks_) {
+        unique_states.insert(state);
+    }
+    for (const auto& [state, _] : wheelCallbacks_) {
+        unique_states.insert(state);
+    }
+
+    std::vector<std::string> states;
+    states.assign(unique_states.begin(), unique_states.end());
+    return states;
 }
 
 MouseHandler::MouseHotkey MouseHandler::createHotkey(const InputEvent &event)

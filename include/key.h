@@ -2,6 +2,8 @@
 #include <string>
 #include <unordered_map>
 #include <algorithm>
+#include <string_view>
+#include "StringUtils.h"
 #include <stdexcept>
 #include <cctype>
 
@@ -105,7 +107,7 @@ enum class Key
 
 // Инициализация маппинга строка -> enum
 
-inline const auto mapfrom = std::unordered_map<std::string, Key>({{"unknown", Key::Unknown},
+inline const auto keyFromStringMap = std::unordered_map<std::string, Key>({{"unknown", Key::Unknown},
                                                                   {"a", Key::A},
                                                                   {"b", Key::B},
                                                                   {"c", Key::C},
@@ -208,7 +210,7 @@ inline const auto mapfrom = std::unordered_map<std::string, Key>({{"unknown", Ke
 
 
 
-inline const auto maptostr = std::unordered_map<Key, std::string>({{Key::Unknown, "Unknown"},                                                                   
+inline const auto stringFromKeyMap = std::unordered_map<Key, std::string>({{Key::Unknown, "Unknown"},
                                                                          {Key::A, "A"},
                                                                          {Key::B, "B"},
                                                                          {Key::C, "C"},
@@ -303,37 +305,24 @@ inline const auto maptostr = std::unordered_map<Key, std::string>({{Key::Unknown
                                                                          {Key::Menu, "Menu"},
                                                                          {Key::Application, "Application"}});
 
-// Нормализация строки (нижний регистр + удаление неалфавитных символов)
-static std::string normalizeString(const std::string &str)
-{
-    std::string result;
-    for (unsigned char c : str)
-    {
-        if (std::isalnum(c))
-        {
-            result += std::tolower(c);
-        }
-    }
-    return result;
-}
 // Преобразование строки в Key
-static Key KeyfromString(const std::string &str)
+inline Key KeyfromString(std::string_view str)
 {
-    std::string normalized = normalizeString(str);
-    auto it = mapfrom.find(normalized);
+    std::string lower = StringUtils::toLower(str); // toLower создаст строку
+    auto it = keyFromStringMap.find(lower);
 
-    if (it != mapfrom.end())
+    if (it != keyFromStringMap.end())
     {
-        return Key(it->second);
+        return it->second;
     }
-    return Key(Key::Unknown);
+    return Key::Unknown;
 }
 
 // Преобразование в строку
-static std::string KeytoString(Key value) 
+inline std::string KeytoString(Key value) 
 {
-    auto it = maptostr.find(value);
-    if (it != maptostr.end())
+    auto it = stringFromKeyMap.find(value);
+    if (it != stringFromKeyMap.end())
     {
         return it->second;
     }

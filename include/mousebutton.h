@@ -2,6 +2,8 @@
 #include <string>
 #include <unordered_map>
 #include <algorithm>
+#include <string_view>
+#include "StringUtils.h"
 #include <stdexcept>
 #include <cctype>
 
@@ -14,16 +16,6 @@ enum class MouseButton
     Extra1,
     Extra2
 };
-
-// Преобразование в нижний регистр
-static std::string toLower(const std::string &str)
-{
-    std::string result = str;
-    std::transform(result.begin(), result.end(), result.begin(),
-                   [](unsigned char c)
-                   { return std::tolower(c); });
-    return result;
-}
 
 // Маппинг строка -> enum (инициализируется один раз)
 inline const auto MouseButtonFromStringMap = std::unordered_map<std::string, MouseButton>{
@@ -43,9 +35,9 @@ inline const auto StringFromMouseButtonMap = std::unordered_map<MouseButton, std
     {MouseButton::Extra2, "Extra2"}};
 
 // Преобразование строки в MouseButton (статический метод)
-static MouseButton MouseButtonfromString(const std::string &str)
+inline MouseButton MouseButtonfromString(std::string_view str)
 {
-    std::string lower = toLower(str);
+    std::string lower = StringUtils::toLower(str); // toLower создаст строку
     auto it = MouseButtonFromStringMap.find(lower);
 
     if (it != MouseButtonFromStringMap.end())
@@ -56,7 +48,7 @@ static MouseButton MouseButtonfromString(const std::string &str)
 }
 
 // Преобразование в строку
-static std::string MouseButtonToString(MouseButton value) 
+inline std::string MouseButtonToString(MouseButton value) 
 {
     auto it = StringFromMouseButtonMap.find(value);
     if (it != StringFromMouseButtonMap.end())

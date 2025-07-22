@@ -2,6 +2,7 @@
 #include "IInputHandler.h"
 #include "InputStateManager.h"
 #include <unordered_map>
+#include <string_view>
 #include <string>
 #include <optional>
 
@@ -36,17 +37,20 @@ public:
 
     // Binds a key to a named action. The action must be defined in InputProcessor.
     void registerBinding(
-        const std::string &state,
-        const std::string &actionName,
-        const std::string &keyName,
+        std::string_view state,
+        std::string_view actionName,
+        std::string_view keyName,
         uint16_t modifiers,
         bool onRelease = false) override;
 
     // Finds the key binding for a given action in a specific state. Used for saving configs.
     std::optional<Hotkey> findBindingForAction(const std::string &actionName, const std::string &state) const;
 
+    // Returns a list of all states that have bindings registered.
+    std::vector<std::string> getRegisteredStates() const;
+
 private:
-    void registerBinding(const std::string &state, const std::string &actionName, Key key, uint16_t modifiers, bool onRelease);
+    void registerBinding(std::string_view state, std::string_view actionName, Key key, uint16_t modifiers, bool onRelease);
 
     struct StateHotkeys
     {

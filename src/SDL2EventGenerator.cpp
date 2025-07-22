@@ -269,17 +269,23 @@ MouseButton SDL2EventGenerator::convertSDLMouseButton(Uint32 button) const
 
 uint16_t SDL2EventGenerator::convertSDLModifiers(Uint32 mod) const
 {
-    uint16_t modifiers = 0;
-    if (mod & KMOD_CTRL)
-        modifiers |= Modifier::Ctrl;
+    uint16_t modifiers = Modifier::None;
     if (mod & KMOD_LCTRL)
-        modifiers |= Modifier::Ctrl;
+        modifiers |= Modifier::LeftCtrl;
+    if (mod & KMOD_RCTRL)
+        modifiers |= Modifier::RightCtrl;
     if (mod & KMOD_SHIFT)
-        modifiers |= Modifier::Shift;
+        modifiers |= Modifier::LeftShift;
+    if (mod & KMOD_RSHIFT)
+        modifiers |= Modifier::RightShift;
     if (mod & KMOD_ALT)
-        modifiers |= Modifier::Alt;
+        modifiers |= Modifier::LeftAlt;
+    if (mod & KMOD_RALT)
+        modifiers |= Modifier::RightAlt;
     if (mod & KMOD_GUI)
-        modifiers |= Modifier::Super;
+        modifiers |= Modifier::LeftSuper;
+    if (mod & KMOD_RGUI)
+        modifiers |= Modifier::RightSuper;
     return modifiers;
 }
 

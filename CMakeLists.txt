@@ -12,25 +12,24 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(SOURCE_ROOT src)
 set(INC_DIR include)
 
-# Добавляем поиск GTest
-#find_package(GTest REQUIRED)
-
-
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -g -O0")
-# Список исходных файлов
-set(SOURCES
-    main.cpp    
+
+# Список исходных файлов для библиотеки
+set(LIB_SOURCES
     ${SOURCE_ROOT}/MouseHandler.cpp
     ${SOURCE_ROOT}/HotkeyHandler.cpp
     ${SOURCE_ROOT}/InputProcessor.cpp
-    ${SOURCE_ROOT}/SDL3EventGenerator.cpp
     ${SOURCE_ROOT}/ConfigManager.cpp
     ${SOURCE_ROOT}/InputStateManager.cpp
 )
 
+# Создание статической библиотеки с основной логикой
+add_library(InputSystemLib STATIC ${LIB_SOURCES})
+target_include_directories(InputSystemLib PUBLIC ${INC_DIR})
+target_link_libraries(InputSystemLib PUBLIC fmt::fmt nlohmann_json::nlohmann_json)
 
 # Создание исполняемого файла
-add_executable(${PROJECT_NAME} ${SOURCES})
+add_executable(${PROJECT_NAME} main.cpp ${SOURCE_ROOT}/SDL3EventGenerator.cpp)
 
 # Настройка включения директорий
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -40,9 +39,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 target_link_libraries(
     ${PROJECT_NAME} PRIVATE
-    fmt::fmt
+    InputSystemLib
     SDL3::SDL3
-    nlohmann_json::nlohmann_json
 )
 
 # Секция для тестов

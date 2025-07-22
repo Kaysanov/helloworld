@@ -1,18 +1,44 @@
 {
-    "keyboard_bindings": {
-        "Jump": {
-            "key": "Space",
-            "modifiers": []
+    "Default": {
+        "keyboard_bindings": {
+            "Crouch": {
+                "key": "C",
+                "modifiers": []
+            },
+            "Jump": {
+                "key": "Space",
+                "modifiers": []
+            },
+            "Quit": {
+                "key": "Escape",
+                "modifiers": []
+            },
+            "ToggleMenu": {
+                "key": "Tab",
+                "modifiers": []
+            }
         },
-        "Quit": {
-            "key": "Escape",
-            "modifiers": []
+        "mouse_bindings": {
+            "Fire": {
+                "button": "Left",
+                "modifiers": []
+            }
         }
     },
-    "mouse_bindings": {
-        "Fire": {
-            "button": "Left",
-            "modifiers": []
+    "Menu": {
+        "keyboard_bindings": {
+            "Quit": {
+                "key": "Escape",
+                "modifiers": []
+            },
+            "ToggleMenu": {
+                "key": "Tab",
+                "modifiers": []
+            }
+        },
+        "mouse_bindings": {}
+    }
+}
         }
     }
 }
